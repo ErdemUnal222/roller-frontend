@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../redux/userSlice';
-import { setToken, setRole, logout } from '../../redux/userSlice';
-import api from "../../api/axios";
+import api from '../../api/axios';
+import '/src/styles/main.scss';
 
 const Profile = () => {
   const dispatch = useDispatch();
+
+  // State for profile data and UI status
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -13,15 +15,16 @@ const Profile = () => {
   const [message, setMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
 
+  // Fetch user profile on component mount
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await api.get('/user/me');
+        const response = await api.get('/me');
         setProfile(response.data.user);
-        dispatch(setUser(response.data.user));
+        dispatch(setUser(response.data.user)); // Sync Redux store
       } catch (error) {
-        console.error('❌ Error fetching profile:', error);
-        setMessage('❌ Failed to load profile. Please login again.');
+        console.error('Error fetching profile:', error);
+        setMessage('Failed to load profile. Please login again.');
       } finally {
         setLoading(false);
       }
@@ -29,21 +32,25 @@ const Profile = () => {
     fetchProfile();
   }, [dispatch]);
 
+  // Handle input field changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProfile((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle file selection for image upload
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
   };
 
+  // Save updated profile (with optional image)
   const handleSave = async () => {
     setSaving(true);
     setMessage('');
 
     try {
-      let updatedData = {
+      // Build the updated profile payload
+      const updatedData = {
         firstName: profile.firstName,
         lastName: profile.lastName,
         email: profile.email,
@@ -53,6 +60,7 @@ const Profile = () => {
         phone: profile.phone,
       };
 
+      // Handle profile picture upload if provided
       if (selectedFile) {
         const formData = new FormData();
         formData.append('picture', selectedFile);
@@ -61,92 +69,95 @@ const Profile = () => {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
 
-        // Update the profile state safely
         setProfile((prev) => ({
           ...prev,
-          picture: uploadResponse.data.filename
+          picture: uploadResponse.data.filename,
         }));
 
         updatedData.picture = uploadResponse.data.filename;
       }
 
+      // Submit profile updates
       await api.put(`/user/${profile.id}`, updatedData);
-
-      setMessage('✅ Profile updated successfully!');
+      setMessage('Profile updated successfully.');
       setEditing(false);
       setSelectedFile(null);
     } catch (error) {
-      console.error('❌ Error updating profile:', error);
-      setMessage('❌ Error updating profile.');
+      console.error('Error updating profile:', error);
+      setMessage('Error updating profile.');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <div className="p-4">⏳ Loading profile...</div>;
-  if (!profile) return <div className="p-4 text-red-500">{message || "Profile not found."}</div>;
+  // Display loading state
+  if (loading) return <div className="profile-message">Loading profile...</div>;
+
+  // Display error or missing profile
+  if (!profile) return <div className="profile-message error">{message || 'Profile not found.'}</div>;
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-center">My Profile</h1>
+    <div className="profile-container">
+      <h1 className="profile-title">My Profile</h1>
 
-      {message && <p className="mb-4 text-center text-green-500">{message}</p>}
+      {message && <p className="profile-message">{message}</p>}
 
-      <div className="space-y-4">
-        {profile.picture && (
-          <div className="flex justify-center mb-4">
-            <img
-              src={`/uploads/${profile.picture}`}
-              alt="Profile"
-              className="w-32 h-32 object-cover rounded-full border-4 border-gray-300"
-            />
+      {/* Display profile image if available */}
+      {profile.picture && (
+        <div className="profile-image-wrapper">
+          <img
+            src={`http://ihsanerdemunal.ide.3wa.io:9500/uploads/${profile.picture}?t=${Date.now()}`}
+            alt="Profile"
+            className="profile-image"
+          />
+        </div>
+      )}
+
+      {/* Editable form */}
+      {editing ? (
+        <>
+          <input type="file" accept="image/*" onChange={handleFileChange} className="profile-file-input" />
+          <div className="profile-form">
+            {['firstName', 'lastName', 'email', 'address', 'zip', 'city', 'phone'].map((field) => (
+              <input
+                key={field}
+                type="text"
+                name={field}
+                value={profile[field] ?? ''}
+                onChange={handleChange}
+                placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+              />
+            ))}
           </div>
-        )}
+        </>
+      ) : (
+        // Read-only display
+        <div className="profile-details">
+          <p><strong>First Name:</strong> {profile.firstName}</p>
+          <p><strong>Last Name:</strong> {profile.lastName}</p>
+          <p><strong>Email:</strong> {profile.email}</p>
+          <p><strong>Address:</strong> {profile.address}</p>
+          <p><strong>City:</strong> {profile.city}</p>
+          <p><strong>ZIP:</strong> {profile.zip}</p>
+          <p><strong>Phone:</strong> {profile.phone}</p>
+          <p><strong>Role:</strong> {profile.role}</p>
+        </div>
+      )}
 
-        {editing ? (
-          <>
-            <input type="file" accept="image/*" onChange={handleFileChange} className="mb-4" />
-            <div className="space-y-2">
-              {['firstName', 'lastName', 'email', 'address', 'zip', 'city', 'phone'].map((field) => (
-                <input
-                  key={field}
-                  type="text"
-                  name={field}
-                  value={profile[field] ?? ''}
-                  onChange={handleChange}
-                  placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                  className="border p-2 w-full rounded"
-                />
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <p><strong>First Name:</strong> {profile.firstName}</p>
-            <p><strong>Last Name:</strong> {profile.lastName}</p>
-            <p><strong>Email:</strong> {profile.email}</p>
-            <p><strong>Address:</strong> {profile.address}</p>
-            <p><strong>City:</strong> {profile.city}</p>
-            <p><strong>ZIP:</strong> {profile.zip}</p>
-            <p><strong>Phone:</strong> {profile.phone}</p>
-            <p><strong>Role:</strong> {profile.role}</p>
-          </>
-        )}
-      </div>
-
-      <div className="mt-6 flex gap-4 justify-center">
+      {/* Action buttons */}
+      <div className="profile-actions">
         {editing ? (
           <button
             onClick={handleSave}
             disabled={saving}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded"
+            className="btn btn-green"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
         ) : (
           <button
             onClick={() => setEditing(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded"
+            className="btn btn-blue"
           >
             Edit Profile
           </button>

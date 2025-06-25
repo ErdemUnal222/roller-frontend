@@ -1,85 +1,116 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
+import '../../styles/main.scss';
 
 function EditProduct() {
+  // Get product ID from URL params
   const { id } = useParams();
   const navigate = useNavigate();
 
+  // State for product details
   const [product, setProduct] = useState({
     title: '',
     description: '',
     price: '',
-    stock: ''
+    stock: '',
+    alt: ''
   });
 
+  // Image file state
   const [imageFile, setImageFile] = useState(null);
+
+  // Loading and feedback message state
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
+  // Fetch product details on mount
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const response = await api.get(`/products/${id}`);
-        setProduct(response.data.result);
-        setLoading(false);
+        const result = response.data?.result?.[0];
+        if (result) {
+          setProduct(result);
+        }
       } catch (error) {
         console.error('Error fetching product:', error);
         setMessage('Error loading product');
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProduct();
   }, [id]);
 
+  // Handle input changes
   const handleChange = (e) => {
     setProduct({ ...product, [e.target.name]: e.target.value });
   };
 
+  // Handle file input
   const handleFileChange = (e) => {
     setImageFile(e.target.files[0]);
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    try {
-      const formData = new FormData();
-      formData.append('title', product.title);
-      formData.append('description', product.description);
-      formData.append('price', product.price);
-      formData.append('stock', product.stock);
-      if (imageFile) formData.append('image', imageFile);
+    const formData = new FormData();
 
-      await api.put(`/products/${id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+    // Append all product fields
+    for (let key in product) {
+      formData.append(key, product[key]);
+    }
+
+    // Append new image file if provided
+    if (imageFile) {
+      formData.append('picture', imageFile);
+    }
+
+    try {
+      await api.put(`/products/edit/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        withCredentials: true
       });
 
-      setMessage('✅ Product updated successfully');
+      // Redirect to product list on success
       navigate('/products');
-    } catch (error) {
-      console.error('Error updating product:', error);
-      setMessage('❌ Failed to update product');
+    } catch (err) {
+      console.error('Error updating product:', err);
+      setMessage('Error updating product');
     }
   };
 
-  if (loading) return <div>Loading product...</div>;
+  if (loading) {
+    return <div className="form-loading">Loading product...</div>;
+  }
 
   return (
-    <div className="max-w-xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Edit Product</h1>
-      {message && <p className="mb-4 text-center text-green-600">{message}</p>}
+    <div className="edit-product-container">
+      <h1 className="edit-product-title">Edit Product</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {message && <p className="form-error">{message}</p>}
+
+      {/* Preview current product image if available */}
+      {product.picture && (
+        <img
+          src={`http://ihsanerdemunal.ide.3wa.io:9500/uploads/${product.picture}`}
+          alt={product.alt || 'Product Image'}
+          className="product-image"
+        />
+      )}
+
+      {/* Edit product form */}
+      <form onSubmit={handleSubmit} className="edit-product-form">
         <input
           type="text"
           name="title"
           value={product.title}
           onChange={handleChange}
           placeholder="Title"
-          className="w-full border p-2 rounded"
         />
 
         <textarea
@@ -87,7 +118,6 @@ function EditProduct() {
           value={product.description}
           onChange={handleChange}
           placeholder="Description"
-          className="w-full border p-2 rounded"
         />
 
         <input
@@ -96,7 +126,6 @@ function EditProduct() {
           value={product.price}
           onChange={handleChange}
           placeholder="Price"
-          className="w-full border p-2 rounded"
         />
 
         <input
@@ -105,22 +134,15 @@ function EditProduct() {
           value={product.stock}
           onChange={handleChange}
           placeholder="Stock"
-          className="w-full border p-2 rounded"
         />
 
         <input
           type="file"
           accept="image/*"
           onChange={handleFileChange}
-          className="w-full border p-2 rounded"
         />
 
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Update Product
-        </button>
+        <button type="submit" className="form-button">Update Product</button>
       </form>
     </div>
   );

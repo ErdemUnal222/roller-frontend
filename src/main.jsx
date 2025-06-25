@@ -2,8 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import { Provider } from 'react-redux';
-import store from './redux/store'; // ✅ This path must match your structure
-import './index.css'; // ✅ If you have it
+import store from './redux/store';
+
+import '/src/styles/main.scss';
+
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

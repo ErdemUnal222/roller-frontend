@@ -1,50 +1,66 @@
+// /src/api/axios.js
 import axios from 'axios';
 
-// Create an axios instance
+// Create a customized Axios instance
 const api = axios.create({
-  baseURL: 'http://ihsanerdemunal.ide.3wa.io:9500/api/v1',
+baseURL: 'http://ihsanerdemunal.ide.3wa.io:9500/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add a request interceptor to automatically add the token
+// Add Authorization token to each request if available
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token'); // or sessionStorage
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+    const storedUser = localStorage.getItem('user');
+    let token;
+
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      token = parsedUser?.token;
+    } catch (err) {
+      console.warn("Could not parse user from localStorage:", err);
     }
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
     return config;
   },
   (error) => {
-    console.error('Request error:', error);
+    console.error('Axios request error:', error);
     return Promise.reject(error);
   }
 );
 
-// Add a response interceptor to handle errors globally
+// Centralized error handling
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-    if (error.response) {
-      // Server responded with a status code outside 2xx
-      console.error(`API error [${error.response.status}]:`, error.response.data);
+    let formattedMessage = "An unexpected error occurred.";
 
-      if (error.response.status === 401) {
-        // Unauthorized — token invalid, expired or missing
-        console.warn('⚠️ Unauthorized! Redirecting to login...');
-        // Optionally redirect the user to login
+    if (error.response) {
+      const status = error.response.status;
+      const message =
+        typeof error.response.data === 'string'
+          ? error.response.data
+          : error.response.data?.message;
+
+      if (message) formattedMessage = message;
+
+      if (status === 401 || status === 403) {
+        console.warn('Unauthorized or forbidden. Redirecting to login...');
+        localStorage.clear();
         window.location.href = '/login';
       }
     } else if (error.request) {
-      // Request made but no response
-      console.error('No response received:', error.request);
+      formattedMessage = "No response from the server.";
     } else {
-      console.error('Error setting up request:', error.message);
+      formattedMessage = error.message;
     }
+
+    error.formattedMessage = formattedMessage;
     return Promise.reject(error);
   }
 );

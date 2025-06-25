@@ -1,13 +1,21 @@
+// /src/pages/Availability.jsx
+
 import { useEffect, useState } from 'react';
 import {
   getAllAvailabilities,
-  createAvailability
+  createAvailability,
 } from '../../api/availabilityService';
+import "/src/styles/main.scss";
 
+/**
+ * Availability Component
+ * Allows users to view and manage their availability slots.
+ */
 function Availability() {
   const [availabilities, setAvailabilities] = useState([]);
   const [newSlot, setNewSlot] = useState({ date: '', isAvailable: true });
 
+  // Fetch all availabilities on component mount
   useEffect(() => {
     async function fetchData() {
       try {
@@ -20,36 +28,41 @@ function Availability() {
     fetchData();
   }, []);
 
+  // Handle new availability submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const created = await createAvailability(newSlot);
-      setAvailabilities([...availabilities, created]);
-      setNewSlot({ date: '', isAvailable: true });
+      setAvailabilities([...availabilities, created]); // Add new slot to UI
+      setNewSlot({ date: '', isAvailable: true });     // Reset form
     } catch (err) {
       console.error('Error creating availability:', err);
     }
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">My Availability</h2>
+    <div className="availability-page" role="main" aria-labelledby="availability-title">
+      <h2 id="availability-title" className="availability-title">My Availability</h2>
 
-      <form onSubmit={handleSubmit} className="mb-4 space-y-2">
+      {/* Availability Form */}
+      <form onSubmit={handleSubmit} className="availability-form">
         <input
           type="date"
           value={newSlot.date}
           onChange={(e) => setNewSlot({ ...newSlot, date: e.target.value })}
-          className="border p-2 rounded w-full"
+          className="availability-input"
+          required
+          aria-label="Select availability date"
         />
-        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">
+        <button type="submit" className="availability-button">
           Add Availability
         </button>
       </form>
 
-      <ul className="space-y-2">
+      {/* List of availabilities */}
+      <ul className="availability-list">
         {availabilities.map((slot) => (
-          <li key={slot.id} className="border p-3 rounded">
+          <li key={slot.id} className="availability-item">
             {slot.date} — {slot.isAvailable ? 'Available' : 'Unavailable'}
           </li>
         ))}

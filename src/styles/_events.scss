@@ -1,0 +1,219 @@
+@use './variables' as *;
+
+/* --- Events Page Container --- */
+.events-page {
+  padding: 1rem;
+}
+
+.events-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.events-subtitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+/* --- Event Form --- */
+.event-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+
+  input,
+  textarea {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 0.25rem;
+  }
+
+  button {
+    background-color: #2563eb;
+    color: white;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 0.25rem;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #1e40af;
+    }
+  }
+
+  label {
+    font-weight: 600;
+  }
+
+  .event-image-preview {
+    width: 100%;
+    height: 10rem;
+    object-fit: cover;
+    border-radius: 0.25rem;
+    border: 1px solid #ccc;
+  }
+}
+
+/* --- Event Grid --- */
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* --- Event Card --- */
+.event-card {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+
+  .event-image {
+    width: 100%;
+    height: 10rem;
+    object-fit: cover;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .event-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .event-date {
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+  }
+
+  .event-description {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .event-link {
+    color: #2563eb;
+    text-decoration: underline;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+  }
+
+  .event-edit-link {
+    font-size: 0.875rem;
+    color: #15803d;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}
+
+/* --- Event Details --- */
+.event-details {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+.event-title {
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.event-image {
+  width: 100%;
+  max-height: 16rem;
+  object-fit: cover;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.event-description {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.event-meta {
+  color: #555;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+/* --- Event Upload --- */
+.event-upload {
+  margin: 1.5rem 0;
+
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  input[type="file"] {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  button {
+    background-color: #facc15;
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-weight: 500;
+
+    &:hover {
+      background-color: #eab308;
+    }
+  }
+}
+
+/* --- Event Buttons --- */
+.event-button {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  border-radius: 0.25rem;
+  border: none;
+  cursor: pointer;
+  color: white;
+
+  &.register {
+    background-color: #2563eb;
+
+    &:hover {
+      background-color: #1e40af;
+    }
+  }
+
+  &.unregister {
+    background-color: #dc2626;
+
+    &:hover {
+      background-color: #991b1b;
+    }
+  }
+}
+
+/* --- Messages & Empty States --- */
+.event-message {
+  margin-top: 1rem;
+  text-align: center;
+  color: #16a34a;
+  font-weight: 500;
+}
+
+.event-empty {
+  color: #dc2626;
+  font-weight: 500;
+}

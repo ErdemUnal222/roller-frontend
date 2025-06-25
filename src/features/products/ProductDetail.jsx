@@ -1,32 +1,109 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import api from "../../api/axios";
+import { getAllProducts, createProduct, deleteProduct } from '../../api/productService';
+import { Link } from 'react-router-dom';
+import '/src/styles/main.scss';
 
-const ProductDetail = () => {
-  const { id } = useParams();
-  const [product, setProduct] = useState(null);
+function Products() {
+  // State for products and new product form
+  const [products, setProducts] = useState([]);
+  const [newProduct, setNewProduct] = useState({ title: '', description: '', price: '' });
+  const [loading, setLoading] = useState(true);
 
+  // Fetch all products on component mount
   useEffect(() => {
-    const fetchProduct = async () => {
+    async function fetchData() {
       try {
-        const response = await api.get(`/products/${id}`);
-        setProduct(response.data.result);
+        const data = await getAllProducts();
+        setProducts(Array.isArray(data.result) ? data.result : []);
       } catch (error) {
-        console.error('Error fetching product:', error);
+        console.error('Error loading products:', error);
+        setProducts([]);
+      } finally {
+        setLoading(false);
       }
-    };
-    fetchProduct();
-  }, [id]);
+    }
 
-  if (!product) return <div>Loading...</div>;
+    fetchData();
+  }, []);
+
+  // Handle new product submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const created = await createProduct(newProduct);
+      setProducts([...products, created]); // Update product list
+      setNewProduct({ title: '', description: '', price: '' }); // Reset form
+    } catch (err) {
+      console.error('Error creating product:', err);
+    }
+  };
+
+  // Handle product deletion
+  const handleDelete = async (id) => {
+    const confirm = window.confirm('Are you sure you want to delete this product?');
+    if (!confirm) return;
+
+    try {
+      await deleteProduct(id);
+      setProducts(products.filter((p) => p.id !== id)); // Remove deleted product from list
+    } catch (err) {
+      console.error('Error deleting product:', err);
+    }
+  };
 
   return (
-    <div className="p-4">
-      <h1 className="text-3xl font-bold mb-4">{product.title}</h1>
-      <p className="mb-2">{product.description}</p>
-      <p className="text-green-600 font-bold text-xl">{product.price} €</p>
+    <div className="admin-products-container">
+      <h2 className="admin-products-title">Manage Products</h2>
+
+      {/* New product form */}
+      <form onSubmit={handleSubmit} className="admin-product-form">
+        <input
+          type="text"
+          placeholder="Product title"
+          value={newProduct.title}
+          onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
+          required
+        />
+        <textarea
+          placeholder="Description"
+          value={newProduct.description}
+          onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+          required
+        />
+        <input
+          type="number"
+          step="0.01"
+          placeholder="Price"
+          value={newProduct.price}
+          onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+          required
+        />
+        <button type="submit">Add Product</button>
+      </form>
+
+      {/* Product list or loading indicator */}
+      {loading ? (
+        <div className="admin-loading">Loading products...</div>
+      ) : (
+        <ul className="admin-product-list">
+          {products.map((product) => (
+            <li key={product.id} className="admin-product-item">
+              <div>
+                <p className="admin-product-name">{product.title}</p>
+                <p className="admin-product-price">{product.price} €</p>
+              </div>
+              <div className="admin-product-actions">
+                <Link to={`/products/edit/${product.id}`}>Edit</Link>
+                <button onClick={() => handleDelete(product.id)} className="delete">
+                  Delete
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
-};
+}
 
-export default ProductDetail;
+export default Products;

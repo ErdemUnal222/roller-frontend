@@ -1,10 +1,14 @@
 import { useSelector } from 'react-redux';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 function PrivateRoute() {
   const token = useSelector((state) => state.user.token);
+  const location = useLocation();
 
-  if (!token) return <Navigate to="/login" />;
+  if (!token) {
+    console.warn('🔒 Access denied: no token found, redirecting to login');
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
   return <Outlet />;
 }

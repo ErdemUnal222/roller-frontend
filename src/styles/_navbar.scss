@@ -1,0 +1,145 @@
+.navbar {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1rem;
+
+  .navbar-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #111827;
+    text-decoration: none;
+  }
+
+  .navbar-toggle {
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: none;
+
+    @media (max-width: 768px) {
+      display: block;
+    }
+  }
+
+  .navbar-menu {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-grow: 1;
+
+    &.open {
+      flex-direction: column;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      display: none;
+
+      &.open {
+        display: flex;
+      }
+    }
+
+    .navbar-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+
+      &.left {
+        flex: 1;
+      }
+
+      &.right {
+        justify-content: flex-end;
+      }
+    }
+
+    .navbar-link {
+      text-decoration: none;
+      color: #374151;
+      font-weight: 500;
+
+      &:hover {
+        color: #2563eb;
+      }
+    }
+
+    .cart {
+      position: relative;
+
+      .cart-count {
+        position: absolute;
+        top: -0.5rem;
+        right: -0.75rem;
+        background-color: #ef4444;
+        color: white;
+        font-size: 0.75rem;
+        font-weight: bold;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+      }
+    }
+
+    .profile-link {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      .navbar-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .navbar-avatar-placeholder {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #9ca3af;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+      }
+    }
+
+    .navbar-button {
+      background: none;
+      border: none;
+      color: #ef4444;
+      font-weight: 500;
+      cursor: pointer;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    .admin-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-top: 0.5rem;
+    }
+
+    .navbar-admin {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+  }
+}

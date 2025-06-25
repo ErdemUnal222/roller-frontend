@@ -1,3 +1,5 @@
+// /src/pages/Cart.jsx
+
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import {
@@ -5,22 +7,29 @@ import {
   decrementItem,
   removeItem,
 } from '../../redux/cartSlice';
+import "/src/styles/main.scss";
 
-function Cart() {
+/**
+ * Cart Component
+ * Displays the current user's shopping cart with item controls and checkout link.
+ */
+const Cart = () => {
   const dispatch = useDispatch();
   const cartItems = useSelector((state) => state.cart.items);
 
+  // Calculate total cart value
   const total = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
 
+  // Display message if cart is empty
   if (cartItems.length === 0) {
     return (
-      <div className="p-6 text-center">
-        <h2 className="text-2xl font-bold mb-4">Your Cart</h2>
+      <div className="cart-empty">
+        <h2 className="cart-title">Your Cart</h2>
         <p>Your cart is empty.</p>
-        <Link to="/productslist" className="text-blue-600 underline">
+        <Link to="/products" className="cart-link">
           Continue Shopping
         </Link>
       </div>
@@ -28,34 +37,51 @@ function Cart() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-4">Your Cart</h2>
+    <div className="cart-container" role="main" aria-labelledby="cart-title">
+      <h2 id="cart-title" className="cart-title">Your Cart</h2>
+
+      {/* Render each cart item */}
       {cartItems.map((item) => (
-        <div
-          key={item.id}
-          className="flex justify-between items-center border-b py-4"
-        >
-          <div>
-            <h3 className="font-semibold">{item.title}</h3>
-            <p className="text-sm text-gray-600">€{item.price}</p>
+        <div key={item.id} className="cart-item">
+          <div className="cart-item-info">
+            {item.image && (
+              <img
+                src={`/uploads/${item.image}`}
+                alt={item.title || 'Product image'}
+                className="cart-item-image"
+              />
+            )}
+            <div>
+              <h3 className="cart-item-title">{item.title}</h3>
+              <p className="cart-item-price">€{item.price}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Quantity control buttons */}
+          <div className="cart-controls">
             <button
-              className="bg-gray-300 px-2 rounded"
+              className="cart-button"
               onClick={() => dispatch(decrementItem(item.id))}
+              aria-label={`Decrease quantity of ${item.title}`}
             >
-              -
+              −
             </button>
+
             <span>{item.quantity}</span>
+
             <button
-              className="bg-gray-300 px-2 rounded"
-              onClick={() => dispatch(incrementItem(item.id))}
+              className="cart-button"
+onClick={() => dispatch(incrementItem({ id: item.id, stock: item.stock }))}
+              aria-label={`Increase quantity of ${item.title}`}
             >
               +
             </button>
+
+            {/* Remove item from cart */}
             <button
-              className="text-red-500 ml-4"
+              className="cart-remove"
               onClick={() => dispatch(removeItem(item.id))}
+              aria-label={`Remove ${item.title} from cart`}
             >
               Remove
             </button>
@@ -63,17 +89,15 @@ function Cart() {
         </div>
       ))}
 
-      <div className="text-right mt-6">
-        <p className="text-lg font-semibold">Total: €{total.toFixed(2)}</p>
-        <Link
-          to="/checkout"
-          className="inline-block mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
+      {/* Display total and proceed to checkout */}
+      <div className="cart-summary">
+        <p className="cart-total">Total: €{total.toFixed(2)}</p>
+        <Link to="/checkout" className="cart-checkout-button">
           Proceed to Checkout
         </Link>
       </div>
     </div>
   );
-}
+};
 
 export default Cart;

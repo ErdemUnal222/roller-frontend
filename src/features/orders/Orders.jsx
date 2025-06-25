@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
 import { getAllOrders, createOrder } from '../../api/orderService';
+import '/src/styles/main.scss';
 
 function Orders() {
+  // State to store the list of orders
   const [orders, setOrders] = useState([]);
+
+  // State to manage the new order form
   const [newOrder, setNewOrder] = useState({ productId: '', quantity: 1 });
 
+  // Fetch all orders on component mount
   useEffect(() => {
     async function fetchOrders() {
       try {
-        const data = await getAllOrders();
-        setOrders(data);
+        const data = await getAllOrders(); // Fetch orders from the API
+        setOrders(data); // Update the state with the fetched orders
       } catch (err) {
         console.error('Error fetching orders:', err);
       }
@@ -18,28 +23,30 @@ function Orders() {
     fetchOrders();
   }, []);
 
+  // Handle form submission to create a new order
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const createdOrder = await createOrder(newOrder);
-      setOrders([...orders, createdOrder]);
-      setNewOrder({ productId: '', quantity: 1 });
+      const createdOrder = await createOrder(newOrder); // API call to create the order
+      setOrders([...orders, createdOrder]); // Append the new order to the existing list
+      setNewOrder({ productId: '', quantity: 1 }); // Reset the form
     } catch (err) {
       console.error('Error creating order:', err);
     }
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">My Orders</h2>
+    <div className="orders-container">
+      <h2 className="orders-title">My Orders</h2>
 
-      <form onSubmit={handleSubmit} className="mb-4 space-y-2">
+      {/* Order creation form */}
+      <form onSubmit={handleSubmit} className="orders-form">
         <input
           type="text"
           placeholder="Product ID"
           value={newOrder.productId}
           onChange={(e) => setNewOrder({ ...newOrder, productId: e.target.value })}
-          className="border p-2 rounded w-full"
+          required
         />
         <input
           type="number"
@@ -47,17 +54,16 @@ function Orders() {
           placeholder="Quantity"
           value={newOrder.quantity}
           onChange={(e) => setNewOrder({ ...newOrder, quantity: parseInt(e.target.value) })}
-          className="border p-2 rounded w-full"
+          required
         />
-        <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded">
-          Place Order
-        </button>
+        <button type="submit">Place Order</button>
       </form>
 
-      <ul className="space-y-2">
+      {/* Orders list */}
+      <ul className="orders-list">
         {orders.map((order) => (
-          <li key={order.id} className="border p-3 rounded">
-            Product: {order.productId} — Quantity: {order.quantity}
+          <li key={order.id}>
+            <strong>Product:</strong> {order.productId} — <strong>Quantity:</strong> {order.quantity}
           </li>
         ))}
       </ul>

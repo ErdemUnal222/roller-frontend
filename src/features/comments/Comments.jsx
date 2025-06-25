@@ -1,3 +1,5 @@
+// /src/components/Comments.jsx
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
@@ -6,27 +8,28 @@ import {
   deleteComment,
   updateComment
 } from '../../api/commentService';
+import "/src/styles/main.scss";
 
+/**
+ * Comments Component
+ * Handles fetching, displaying, creating, editing, and deleting comments for a specific event.
+ */
 function Comments() {
-  const { id: eventId } = useParams();
+  const { id: eventId } = useParams(); // Get event ID from URL params
   const [comments, setComments] = useState([]);
-  const [text, setText] = useState('');
+  const [content, setContent] = useState('');
   const [error, setError] = useState('');
-  const [editingId, setEditingId] = useState(null);
-  const [editText, setEditText] = useState('');
+  const [editingId, setEditingId] = useState(null); // Track which comment is being edited
+  const [editContent, setEditContent] = useState(''); // Temporary content for the edit textarea
 
+  // Fetch comments on mount or when eventId changes
   useEffect(() => {
     async function fetchComments() {
       try {
         const response = await getCommentsByEvent(eventId);
-       if (response && response.data && response.data.result) {
-
-          setComments(response.data.result);
-        } else {
-          setComments([]);
-        }
+        setComments(response?.result || []);
       } catch (err) {
-        console.error('❌ Error fetching comments:', err);
+        console.error('Error fetching comments:', err);
         setError('Failed to load comments.');
       }
     }
@@ -34,132 +37,121 @@ function Comments() {
     fetchComments();
   }, [eventId]);
 
+  // Handle new comment form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!text.trim()) return;
+    if (!content.trim()) return;
 
     try {
-      const response = await createComment(eventId, { text });
-      if (response && response.data && response.data.comment) {
-        setComments([...comments, response.data.comment]);
-        setText('');
+      const response = await createComment(eventId, content);
+      if (response?.comment) {
+        setComments([...comments, response.comment]);
+        setContent('');
         setError('');
       }
     } catch (err) {
-      console.error('❌ Error posting comment:', err);
+      console.error('Error posting comment:', err);
       setError('Failed to post comment. Are you logged in?');
     }
   };
 
+  // Handle comment deletion
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this comment?')) return;
+
     try {
       await deleteComment(id);
       setComments(comments.filter((c) => c.id !== id));
     } catch (err) {
-      console.error('❌ Error deleting comment:', err);
+      console.error('Error deleting comment:', err);
       setError('Failed to delete comment.');
     }
   };
 
+  // Start editing a comment
   const handleEdit = (comment) => {
     setEditingId(comment.id);
-    setEditText(comment.content);
+    setEditContent(comment.content);
   };
 
+  // Save edited comment
   const handleEditSave = async (id) => {
-    if (!editText.trim()) return;
+    if (!editContent.trim()) return;
 
     try {
-      await updateComment(id, { content: editText });
+      await updateComment(id, { content: editContent });
       setComments(
         comments.map((c) =>
-          c.id === id ? { ...c, content: editText } : c
+          c.id === id ? { ...c, content: editContent } : c
         )
       );
       setEditingId(null);
-      setEditText('');
+      setEditContent('');
     } catch (err) {
-      console.error('❌ Error updating comment:', err);
+      console.error('Error updating comment:', err);
       setError('Failed to update comment.');
     }
   };
 
+  // Cancel editing mode
   const handleEditCancel = () => {
     setEditingId(null);
-    setEditText('');
+    setEditContent('');
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">Comments</h2>
+    <div className="comments-section" role="region" aria-labelledby="comments-title">
+      <h2 id="comments-title" className="comments-title">Comments</h2>
 
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {error && <p className="comments-error" role="alert">{error}</p>}
 
-      <form onSubmit={handleSubmit} className="mb-4 space-y-2">
+      {/* New Comment Form */}
+      <form onSubmit={handleSubmit} className="comment-form">
         <textarea
           rows="3"
           placeholder="Write a comment..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          className="border p-2 rounded w-full"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="comment-input"
+          aria-label="New comment"
+          required
         />
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-          Post Comment
-        </button>
+        <button type="submit" className="comment-button">Post Comment</button>
       </form>
 
-      <ul className="space-y-3">
+      {/* List of Comments */}
+      <ul className="comment-list">
         {Array.isArray(comments) && comments.length > 0 ? (
           comments.map((comment) => (
-            <li key={comment.id} className="border p-3 rounded">
-              <p className="font-medium">{comment.name || 'Anonymous'}</p>
+            <li key={comment.id} className="comment-item">
+              <p className="comment-author">{comment.name || 'Anonymous'}</p>
 
               {editingId === comment.id ? (
                 <>
                   <textarea
-                    className="border p-2 w-full mt-2"
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
+                    className="comment-edit-input"
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    aria-label="Edit comment"
                   />
-                  <div className="flex gap-2 mt-2">
-                    <button
-                      className="bg-green-500 text-white px-2 py-1 rounded"
-                      onClick={() => handleEditSave(comment.id)}
-                    >
-                      Save
-                    </button>
-                    <button
-                      className="bg-gray-400 text-white px-2 py-1 rounded"
-                      onClick={handleEditCancel}
-                    >
-                      Cancel
-                    </button>
+                  <div className="comment-actions">
+                    <button className="comment-save" onClick={() => handleEditSave(comment.id)}>Save</button>
+                    <button className="comment-cancel" onClick={handleEditCancel}>Cancel</button>
                   </div>
                 </>
               ) : (
                 <>
-                  <p className="mt-1">{comment.content}</p>
-                  <div className="flex gap-2 mt-2">
-                    <button
-                      className="bg-yellow-500 text-white px-2 py-1 rounded"
-                      onClick={() => handleEdit(comment)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="bg-red-500 text-white px-2 py-1 rounded"
-                      onClick={() => handleDelete(comment.id)}
-                    >
-                      Delete
-                    </button>
+                  <p className="comment-content">{comment.content}</p>
+                  <div className="comment-actions">
+                    <button className="comment-edit" onClick={() => handleEdit(comment)}>Edit</button>
+                    <button className="comment-delete" onClick={() => handleDelete(comment.id)}>Delete</button>
                   </div>
                 </>
               )}
             </li>
           ))
         ) : (
-          <li className="text-gray-500">No comments yet.</li>
+          <li className="comment-empty">No comments yet.</li>
         )}
       </ul>
     </div>

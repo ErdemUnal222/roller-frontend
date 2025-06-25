@@ -1,77 +1,96 @@
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { logout } from '../redux/userSlice';
+import '../styles/main.scss';
 
 function Navbar() {
-  const navigate = useNavigate();
-  const token = localStorage.getItem('token');
-  const role = localStorage.getItem('role');
-  const [isLoggedIn, setIsLoggedIn] = useState(!!token);
-  const [isAdmin, setIsAdmin] = useState(role === 'admin');
-
+  const user = useSelector((state) => state.user.user);
+  const token = useSelector((state) => state.user.token);
   const cartItems = useSelector((state) => state.cart.items);
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    setIsLoggedIn(!!token);
-    setIsAdmin(role === 'admin');
-  }, [token, role]);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const isLoggedIn = !!token;
+  const isAdmin = user?.role === 'admin';
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('user');
-    setIsLoggedIn(false);
-    setIsAdmin(false);
+    dispatch(logout());
     navigate('/login');
   };
 
   return (
-    <nav className="bg-gray-900 text-white px-6 py-3 flex items-center justify-between shadow">
-      {/* Left links */}
-      <div className="flex gap-6 items-center">
-        <Link to="/" className="hover:underline">Home</Link>
-        <Link to="/events" className="hover:underline">Events</Link>
-        <Link to="/productslist" className="hover:underline">Products</Link>
+    <header className="navbar" role="banner">
+      <div className="navbar-container">
+        <Link to="/" className="navbar-brand">Roller</Link>
 
-        {isAdmin && (
-          <div className="flex flex-col gap-1 ml-4">
-            <span className="font-semibold text-yellow-400">Admin:</span>
-            <Link to="/products" className="hover:underline">Manage Products</Link>
-            <Link to="/products/add" className="hover:underline">Add Product</Link>
-            <Link to="/admin/events" className="hover:underline">Manage Events</Link>
+        <button
+          className="navbar-toggle"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+        >
+          ☰
+        </button>
+
+        <nav className={`navbar-menu ${menuOpen ? 'open' : ''}`} role="navigation" aria-label="Main">
+          <div className="navbar-section left">
+            <Link to="/" className="navbar-link">Home</Link>
+            <Link to="/events" className="navbar-link">Events</Link>
+            <Link to="/products" className="navbar-link">Products</Link>
+
+            {isAdmin && (
+              <div className="navbar-admin">
+                <span className="admin-label">Admin Panel</span>
+                <Link to="/dashboard" className="navbar-link">Dashboard</Link>
+                <Link to="/admin/products" className="navbar-link">Manage Products</Link>
+                <Link to="/products/add" className="navbar-link">Add Product</Link>
+                <Link to="/admin/events" className="navbar-link">Manage Events</Link>
+                <Link to="/admin/messages" className="navbar-link">Delete Messages</Link> {/* ✅ NEW LINK */}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Right links */}
-      <div className="flex gap-4 items-center">
-        {/* Cart */}
-        <Link to="/cart" className="relative hover:underline">
-          🛒 Cart
-          {cartCount > 0 && (
-            <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-              {cartCount}
-            </span>
-          )}
-        </Link>
+          <div className="navbar-section right">
+            <Link to="/cart" className="navbar-link cart">
+              Cart
+              {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
+            </Link>
 
-        {isLoggedIn ? (
-          <>
-            <Link to="/profile" className="hover:underline">Profile</Link>
-            <button onClick={handleLogout} className="hover:underline text-red-400">
-              Logout
-            </button>
-          </>
-        ) : (
-          <>
-            <Link to="/register" className="hover:underline">Register</Link>
-            <Link to="/login" className="hover:underline">Login</Link>
-          </>
-        )}
+            {isLoggedIn ? (
+              <>
+                <Link to="/messages" className="navbar-link">Messages</Link>
+                <Link to="/profile" className="navbar-link profile-link">
+                  {user?.picture ? (
+                    <img
+                      src={`http://ihsanerdemunal.ide.3wa.io:9500/uploads/${user.picture}?t=${Date.now()}`}
+                      alt={`Avatar of ${user?.firstName || 'user'}`}
+                      className="navbar-avatar"
+                    />
+                  ) : (
+                    <span className="navbar-avatar-placeholder">
+                      {user?.firstName?.[0] || 'U'}
+                    </span>
+                  )}
+                  Profile
+                </Link>
+                <button onClick={handleLogout} className="navbar-button">
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/register" className="navbar-link">Register</Link>
+                <Link to="/login" className="navbar-link">Login</Link>
+              </>
+            )}
+          </div>
+        </nav>
       </div>
-    </nav>
+    </header>
   );
 }
 

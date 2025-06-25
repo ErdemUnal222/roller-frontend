@@ -1,24 +1,62 @@
 import { useState } from 'react';
-import { createProduct } from '../../api/productService';
 import { useNavigate } from 'react-router-dom';
+import axios from '../../api/axios';
+import '/src/styles/main.scss';
 
 function AddProduct() {
+  // State for form inputs
   const [newProduct, setNewProduct] = useState({
     title: '',
     description: '',
     price: '',
     stock: '',
-    picture: '',
     alt: '',
   });
-  const navigate = useNavigate();
+
+  // State to store selected image file
+  const [image, setImage] = useState(null);
+
+  // State for displaying errors
   const [error, setError] = useState('');
 
+  // Navigation hook to redirect on success
+  const navigate = useNavigate();
+
+  // Update form state on input change
+  const handleChange = (e) => {
+    setNewProduct({ ...newProduct, [e.target.name]: e.target.value });
+  };
+
+  // Update image file when selected
+  const handleFileChange = (e) => {
+    setImage(e.target.files[0]);
+  };
+
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const formData = new FormData();
+
+    // Append all form fields to formData
+    for (let key in newProduct) {
+      formData.append(key, newProduct[key]);
+    }
+
+    // Append image if selected
+    if (image) {
+      formData.append('picture', image);
+    }
+
     try {
-      await createProduct(newProduct);
-      navigate('/products'); // ✅ After creation, go back to products list
+      // Send POST request to backend
+      await axios.post('/products/add', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        withCredentials: true,
+      });
+
+      // Redirect to products list on success
+      navigate('/products');
     } catch (err) {
       console.error('Error creating product:', err);
       setError('Failed to create product. Please try again.');
@@ -26,60 +64,57 @@ function AddProduct() {
   };
 
   return (
-    <div className="p-6 max-w-xl mx-auto">
-      <h2 className="text-3xl font-bold mb-6 text-center">Add New Product</h2>
+    <div className="add-product-container">
+      <h2 className="add-product-title">Add New Product</h2>
 
-      {error && <div className="text-red-500 mb-4">{error}</div>}
+      {error && <div className="form-error">{error}</div>}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Product creation form */}
+      <form onSubmit={handleSubmit} className="add-product-form" encType="multipart/form-data">
         <input
-          type="text"
+          name="title"
           placeholder="Title"
-          value={newProduct.title}
-          onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
-          className="border p-2 rounded w-full"
           required
+          onChange={handleChange}
+          className="form-input"
         />
         <textarea
+          name="description"
           placeholder="Description"
-          value={newProduct.description}
-          onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-          className="border p-2 rounded w-full"
-          required
+          onChange={handleChange}
+          className="form-input"
         />
         <input
           type="number"
-          step="0.01"
+          name="price"
           placeholder="Price"
-          value={newProduct.price}
-          onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-          className="border p-2 rounded w-full"
           required
+          onChange={handleChange}
+          className="form-input"
         />
         <input
           type="number"
+          name="stock"
           placeholder="Stock"
-          value={newProduct.stock}
-          onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
-          className="border p-2 rounded w-full"
+          required
+          onChange={handleChange}
+          className="form-input"
         />
         <input
-          type="text"
-          placeholder="Picture URL"
-          value={newProduct.picture}
-          onChange={(e) => setNewProduct({ ...newProduct, picture: e.target.value })}
-          className="border p-2 rounded w-full"
+          name="alt"
+          placeholder="Alt text"
+          onChange={handleChange}
+          className="form-input"
         />
         <input
-          type="text"
-          placeholder="Image Alt Text"
-          value={newProduct.alt}
-          onChange={(e) => setNewProduct({ ...newProduct, alt: e.target.value })}
-          className="border p-2 rounded w-full"
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="form-input"
         />
 
-        <button type="submit" className="bg-purple-600 text-white p-3 rounded w-full hover:bg-purple-700">
-          Save Product
+        <button type="submit" className="form-button">
+          Create Product
         </button>
       </form>
     </div>

@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import { getAllProducts, createProduct, deleteProduct } from '../../api/productService';
 import { Link } from 'react-router-dom';
+import '/src/styles/main.scss';
 
 function Products() {
+  // State for products and new product form
   const [products, setProducts] = useState([]);
   const [newProduct, setNewProduct] = useState({ title: '', description: '', price: '' });
   const [loading, setLoading] = useState(true);
 
+  // Fetch all products on component mount
   useEffect(() => {
     async function fetchData() {
       try {
@@ -19,88 +22,56 @@ function Products() {
         setLoading(false);
       }
     }
+
     fetchData();
   }, []);
 
+  // Handle new product submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const created = await createProduct(newProduct);
-      setProducts([...products, created]);
-      setNewProduct({ title: '', description: '', price: '' });
+      setProducts([...products, created]); // Update product list
+      setNewProduct({ title: '', description: '', price: '' }); // Reset form
     } catch (err) {
       console.error('Error creating product:', err);
     }
   };
 
+  // Handle product deletion
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    const confirm = window.confirm('Are you sure you want to delete this product?');
+    if (!confirm) return;
+
     try {
       await deleteProduct(id);
-      setProducts(products.filter((p) => p.id !== id));
+      setProducts(products.filter((p) => p.id !== id)); // Remove deleted product from list
     } catch (err) {
       console.error('Error deleting product:', err);
     }
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Manage Products</h2>
+    <div className="admin-products-container">
+      <h2 className="admin-products-title">Manage Products</h2>
 
-      <form onSubmit={handleSubmit} className="mb-4 space-y-2">
-        <input
-          type="text"
-          placeholder="Product title"
-          value={newProduct.title}
-          onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
-          className="border p-2 rounded w-full"
-          required
-        />
-        <textarea
-          placeholder="Description"
-          value={newProduct.description}
-          onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-          className="border p-2 rounded w-full"
-          required
-        />
-        <input
-          type="number"
-          step="0.01"
-          placeholder="Price"
-          value={newProduct.price}
-          onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-          className="border p-2 rounded w-full"
-          required
-        />
-        <button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded w-full">
-          Add Product
-        </button>
-      </form>
+      {/* New product form */}
 
+
+      {/* Product list or loading indicator */}
       {loading ? (
-        <div className="text-center text-gray-500">Loading products...</div>
+        <div className="admin-loading">Loading products...</div>
       ) : (
-        <ul className="space-y-2">
+        <ul className="admin-product-list">
           {products.map((product) => (
-            <li
-              key={product.id}
-              className="border p-3 rounded flex justify-between items-center"
-            >
+            <li key={product.id} className="admin-product-item">
               <div>
-                <p className="font-semibold">{product.title}</p>
-                <p className="text-sm text-gray-500">{product.price} €</p>
+                <p className="admin-product-name">{product.title}</p>
+                <p className="admin-product-price">{product.price} €</p>
               </div>
-              <div className="flex gap-3">
-                <Link
-                  to={`/products/edit/${product.id}`}
-                  className="text-blue-600 hover:underline"
-                >
-                  Edit
-                </Link>
-                <button
-                  onClick={() => handleDelete(product.id)}
-                  className="text-red-600 hover:underline"
-                >
+              <div className="admin-product-actions">
+                <Link to={`/products/edit/${product.id}`}>Edit</Link>
+                <button onClick={() => handleDelete(product.id)} className="delete">
                   Delete
                 </button>
               </div>

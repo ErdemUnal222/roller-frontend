@@ -2,11 +2,15 @@ import { useSelector } from 'react-redux';
 import { Navigate, Outlet } from 'react-router-dom';
 
 function AdminRoute() {
-  const token = useSelector((state) => state.user.token);
-  const role = useSelector((state) => state.user.role);
+  const user = useSelector((state) => state.user.user);
 
-  if (!token) return <Navigate to="/login" />;
-  if (role !== 'admin') return <Navigate to="/unauthorized" />;
+  console.log("🔍 USER FROM REDUX:", user);
+
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role?.toLowerCase() !== 'admin') {
+    console.warn("⛔ Not admin:", user.role);
+    return <Navigate to="/unauthorized" replace />;
+  }
 
   return <Outlet />;
 }

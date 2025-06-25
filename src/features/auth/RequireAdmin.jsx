@@ -1,23 +1,51 @@
+// /src/components/RequireAdmin.jsx
+
 import { Navigate, useLocation } from "react-router-dom";
 
+/**
+ * RequireAdmin component
+ * A wrapper to protect admin-only routes.
+ * Redirects non-authenticated users to login and non-admins to an unauthorized page.
+ */
 function RequireAdmin({ children }) {
   const location = useLocation();
 
-  // Example: Replace with your actual logic
-  const user = JSON.parse(localStorage.getItem("user")); // or useContext(AuthContext)
-  const isAdmin = user?.role === "admin"; // Adjust based on your user model
+  /**
+   * Securely parse user object from localStorage.
+   * Returns null if parsing fails.
+   */
+  const user = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
 
+  const isAdmin = user?.role === "admin";
+
+  // Case 1: User is not logged in
   if (!user) {
-    // Not logged in
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: location }}
+        replace
+      />
+    );
   }
 
+  // Case 2: User is logged in but not an admin
   if (!isAdmin) {
-    // Logged in but not admin
-    return <Navigate to="/unauthorized" replace />;
+    return (
+      <Navigate
+        to="/unauthorized"
+        replace
+      />
+    );
   }
 
-  // Authorized
+  // Case 3: User is an authenticated admin — allow access
   return children;
 }
 

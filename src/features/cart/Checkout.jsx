@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { placeOrder } from '../../redux/orderSlice';
 import { clearCart } from '../../redux/cartSlice';
 import { useNavigate } from 'react-router-dom';
+import '/src/styles/main.scss';
 
 function Checkout() {
   const dispatch = useDispatch();
@@ -36,9 +37,34 @@ function Checkout() {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Checkout</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="checkout-container" role="main" aria-labelledby="checkout-title">
+      <h1 id="checkout-title" className="checkout-title">Checkout</h1>
+
+      {/* Order Summary */}
+      <section className="order-summary">
+        <h2 className="summary-heading">Order Summary</h2>
+        <ul className="summary-items">
+          {cartItems.map((item) => (
+            <li key={item.id} className="summary-item">
+              <div className="item-info">
+                <p className="item-title">{item.title}</p>
+                <span className="item-quantity">
+                  {item.quantity} × €{item.price.toFixed(2)}
+                </span>
+              </div>
+              <div className="item-total">
+                €{(item.price * item.quantity).toFixed(2)}
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="summary-total">
+          <strong>Total:</strong> €{total.toFixed(2)}
+        </div>
+      </section>
+
+      {/* Checkout Form */}
+      <form onSubmit={handleSubmit} className="checkout-form">
         <input
           type="text"
           name="name"
@@ -46,7 +72,7 @@ function Checkout() {
           onChange={handleChange}
           placeholder="Full Name"
           required
-          className="w-full border p-2 rounded"
+          className="checkout-input"
         />
         <input
           type="email"
@@ -55,7 +81,7 @@ function Checkout() {
           onChange={handleChange}
           placeholder="Email"
           required
-          className="w-full border p-2 rounded"
+          className="checkout-input"
         />
         <textarea
           name="address"
@@ -63,14 +89,11 @@ function Checkout() {
           onChange={handleChange}
           placeholder="Shipping Address"
           required
-          className="w-full border p-2 rounded"
+          className="checkout-input"
+          rows="4"
         />
-        <p className="text-right font-semibold">Total: €{total.toFixed(2)}</p>
-        <button
-          type="submit"
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full"
-        >
-          Place Order
+        <button type="submit" className="checkout-button">
+          Confirm Order
         </button>
       </form>
     </div>
