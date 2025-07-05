@@ -15,7 +15,7 @@ function Navbar() {
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const isLoggedIn = !!token;
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
 
   const handleLogout = () => {
     dispatch(logout());
@@ -40,16 +40,16 @@ function Navbar() {
           <div className="navbar-section left">
             <Link to="/" className="navbar-link">Home</Link>
             <Link to="/events" className="navbar-link">Events</Link>
-            <Link to="/products" className="navbar-link">Products</Link>
+            <Link to="/shop" className="navbar-link">Products</Link>
 
             {isAdmin && (
               <div className="navbar-admin">
                 <span className="admin-label">Admin Panel</span>
                 <Link to="/dashboard" className="navbar-link">Dashboard</Link>
-                <Link to="/admin/products" className="navbar-link">Manage Products</Link>
+<Link to="/products" className="navbar-link">Manage Products</Link>
                 <Link to="/products/add" className="navbar-link">Add Product</Link>
                 <Link to="/admin/events" className="navbar-link">Manage Events</Link>
-                <Link to="/admin/messages" className="navbar-link">Delete Messages</Link> {/* ✅ NEW LINK */}
+                <Link to="/admin/messages" className="navbar-link">Delete Messages</Link>
               </div>
             )}
           </div>

@@ -4,27 +4,23 @@ import api from '../../api/axios';
 import '../../styles/main.scss';
 
 function EditProduct() {
-  // Get product ID from URL params
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // State for product details
   const [product, setProduct] = useState({
     title: '',
     description: '',
     price: '',
     stock: '',
-    alt: ''
+    alt: '',
   });
 
-  // Image file state
   const [imageFile, setImageFile] = useState(null);
-
-  // Loading and feedback message state
+  const [previewUrl, setPreviewUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [success, setSuccess] = useState('');
 
-  // Fetch product details on mount
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -32,6 +28,9 @@ function EditProduct() {
         const result = response.data?.result?.[0];
         if (result) {
           setProduct(result);
+          if (result.picture) {
+            setPreviewUrl(`http://ihsanerdemunal.ide.3wa.io:9500/uploads/${result.picture}`);
+          }
         }
       } catch (error) {
         console.error('Error fetching product:', error);
@@ -44,28 +43,26 @@ function EditProduct() {
     fetchProduct();
   }, [id]);
 
-  // Handle input changes
   const handleChange = (e) => {
     setProduct({ ...product, [e.target.name]: e.target.value });
   };
 
-  // Handle file input
   const handleFileChange = (e) => {
-    setImageFile(e.target.files[0]);
+    const file = e.target.files[0];
+    setImageFile(file);
+    if (file) {
+      setPreviewUrl(URL.createObjectURL(file));
+    }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const formData = new FormData();
-
-    // Append all product fields
     for (let key in product) {
       formData.append(key, product[key]);
     }
 
-    // Append new image file if provided
     if (imageFile) {
       formData.append('picture', imageFile);
     }
@@ -73,37 +70,33 @@ function EditProduct() {
     try {
       await api.put(`/products/edit/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
-        withCredentials: true
+        withCredentials: true,
       });
-
-      // Redirect to product list on success
-      navigate('/products');
+      setSuccess('Product updated successfully!');
+      setTimeout(() => navigate('/products'), 1000);
     } catch (err) {
       console.error('Error updating product:', err);
       setMessage('Error updating product');
     }
   };
 
-  if (loading) {
-    return <div className="form-loading">Loading product...</div>;
-  }
+  if (loading) return <div className="form-loading">Loading product...</div>;
 
   return (
     <div className="edit-product-container">
       <h1 className="edit-product-title">Edit Product</h1>
 
       {message && <p className="form-error">{message}</p>}
+      {success && <p className="form-success">{success}</p>}
 
-      {/* Preview current product image if available */}
-      {product.picture && (
+      {previewUrl && (
         <img
-          src={`http://ihsanerdemunal.ide.3wa.io:9500/uploads/${product.picture}`}
-          alt={product.alt || 'Product Image'}
+          src={previewUrl}
+          alt={product.alt || 'Product Preview'}
           className="product-image"
         />
       )}
 
-      {/* Edit product form */}
       <form onSubmit={handleSubmit} className="edit-product-form">
         <input
           type="text"
@@ -111,6 +104,7 @@ function EditProduct() {
           value={product.title}
           onChange={handleChange}
           placeholder="Title"
+          className="form-input"
         />
 
         <textarea
@@ -118,6 +112,7 @@ function EditProduct() {
           value={product.description}
           onChange={handleChange}
           placeholder="Description"
+          className="form-input"
         />
 
         <input
@@ -126,6 +121,7 @@ function EditProduct() {
           value={product.price}
           onChange={handleChange}
           placeholder="Price"
+          className="form-input"
         />
 
         <input
@@ -134,15 +130,19 @@ function EditProduct() {
           value={product.stock}
           onChange={handleChange}
           placeholder="Stock"
+          className="form-input"
         />
 
         <input
           type="file"
           accept="image/*"
           onChange={handleFileChange}
+          className="form-input"
         />
 
-        <button type="submit" className="form-button">Update Product</button>
+        <button type="submit" className="form-button">
+          Update Product
+        </button>
       </form>
     </div>
   );

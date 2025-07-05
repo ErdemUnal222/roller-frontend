@@ -15,6 +15,13 @@ export const getAllProducts = async () => {
     throw err.formattedMessage || "Failed to fetch products.";
   }
 };
+// src/api/productService.js
+
+export const getShopProducts = async () => {
+  const response = await API.get('/shop');
+  return response.data;
+};
+
 
 /**
  * Fetch a single product by its ID.
@@ -73,3 +80,7 @@ export const deleteProduct = async (id) => {
     throw err.formattedMessage || "Failed to delete product.";
   }
 };
+export async function getOneProduct(id) {
+  const res = await API.get(`/shop/${id}`);
+  return res.data;
+}

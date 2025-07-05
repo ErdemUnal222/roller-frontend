@@ -34,32 +34,41 @@ function PublicEventList() {
   }, []);
 
   return (
-    <div className="public-events-page">
-      <h1 className="public-events-title">Upcoming Events</h1>
+  <main className="public-events-page">
+    <h1 className="public-events-title">Upcoming Events</h1>
 
-      {loading && <p className="loading-msg">Loading events...</p>}
-      {error && <p className="public-events-error">{error}</p>}
+    {loading && <p className="loading-msg">Loading events...</p>}
+    {error && <p className="public-events-error">{error}</p>}
 
+    <section className="public-event-list">
       {Array.isArray(events) && events.length > 0 ? (
         events.map((event) => (
-          <div key={event.id} className="public-event-card">
+          <article key={event.id} className="public-event-card">
             <h2 className="event-name">{event.title}</h2>
-            <p className="event-date">
-              Date: {new Date(event.event_date).toLocaleDateString()}
-            </p>
+            <time className="event-date">
+              {new Date(event.event_date).toLocaleDateString()}
+            </time>
             <p className="event-description">
               {event.description?.slice(0, 150)}...
             </p>
-            <Link to={`/events/${event.id}`} className="event-link" aria-label={`View details about ${event.title}`}>
-              View Details
+            <Link
+              to={`/events/${event.id}`}
+              className="event-link"
+              aria-label={`View details about ${event.title}`}
+            >
+              View Details →
             </Link>
-          </div>
+          </article>
         ))
       ) : (
-        !loading && !error && <p className="event-empty">No events available at this time.</p>
+        !loading && !error && (
+          <p className="event-empty">No events available at this time.</p>
+        )
       )}
-    </div>
-  );
+    </section>
+  </main>
+);
+
 }
 
 export default PublicEventList;

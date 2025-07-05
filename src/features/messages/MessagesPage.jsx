@@ -11,14 +11,9 @@ function MessagesPage() {
   const reduxUser = useSelector((state) => state.user.user);
   const currentUserId = reduxUser?.id;
 
-  // Dynamically determine the receiver
   const routeId1 = parseInt(userId1, 10);
   const routeId2 = parseInt(userId2, 10);
   const receiverId = routeId1 === currentUserId ? routeId2 : routeId1;
-
-  console.log("📦 useParams:", { userId1, userId2 });
-  console.log("✅ currentUserId (from Redux):", currentUserId);
-  console.log("✅ receiverId (derived):", receiverId);
 
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,15 +24,10 @@ function MessagesPage() {
 
     const fetchMessages = async () => {
       if (!currentUserId || !receiverId) return;
-
       try {
-        console.log("📤 Fetching messages between:", currentUserId, receiverId);
         const res = await api.get(`/messages/${currentUserId}/${receiverId}`);
-
         if (!didCancel) {
-          const fetchedMessages = res.data.result || [];
-          console.log("📥 Fetched messages:", fetchedMessages);
-          setMessages(fetchedMessages);
+          setMessages(res.data.result || []);
           setError('');
         }
       } catch (err) {
@@ -74,7 +64,6 @@ function MessagesPage() {
 
   const handleMessageSent = async () => {
     try {
-      console.log("✉️ Message sent. Refreshing...");
       await new Promise(resolve => setTimeout(resolve, 300));
       const res = await api.get(`/messages/${currentUserId}/${receiverId}`);
       setMessages(res.data.result || []);

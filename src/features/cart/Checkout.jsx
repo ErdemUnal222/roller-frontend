@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { placeOrder } from '../../redux/orderSlice';
 import { clearCart } from '../../redux/cartSlice';
 import { useNavigate } from 'react-router-dom';
 import '/src/styles/main.scss';
@@ -9,6 +8,7 @@ function Checkout() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const cartItems = useSelector((state) => state.cart.items);
+  const auth = useSelector((state) => state.user); // assumes you store user info in auth state
 
   const [form, setForm] = useState({ name: '', email: '', address: '' });
 
@@ -21,19 +21,48 @@ function Checkout() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const orderData = {
-      id: Date.now(),
-      ...form,
-      items: cartItems,
-      total,
-    };
+    try {
+      const token = localStorage.getItem("token");
+      const userId = auth?.user?.id;
 
-    dispatch(placeOrder(orderData));
-    dispatch(clearCart());
-    navigate('/success');
+      if (!userId || !token) {
+        alert("You must be logged in to complete the order.");
+        return;
+      }
+
+      const response = await fetch('http://localhost:9500/orders/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId,
+          totalAmount: total,
+          items: cartItems.map((item) => ({
+            name: item.title,
+            price: item.price,
+            quantity: item.quantity
+          }))
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.url) {
+        // clear cart and redirect to Stripe
+        dispatch(clearCart());
+        window.location.href = data.url;
+      } else {
+        alert("Failed to create Stripe session.");
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+      alert("Something went wrong during checkout. Please try again.");
+    }
   };
 
   return (
@@ -93,7 +122,7 @@ function Checkout() {
           rows="4"
         />
         <button type="submit" className="checkout-button">
-          Confirm Order
+          Confirm and Pay
         </button>
       </form>
     </div>

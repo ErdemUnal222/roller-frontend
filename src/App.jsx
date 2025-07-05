@@ -1,4 +1,5 @@
 // /src/App.jsx
+import './styles/main.scss';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -19,9 +20,9 @@ import PublicEventList from './features/events/PublicEventList';
 import EventDetails from './features/events/EventDetails';
 import CreateEvent from './features/events/CreateEvent';
 
-import ProductList from './features/products/ProductList';
-import ProductDetail from './features/products/ProductDetail';
-import Products from './features/products/Products';
+import ProductList from './features/products/ProductList';      // Public view
+import ProductDetail from './features/products/ProductDetail'; // Public view
+import Products from './features/products/Products';           // Admin view
 import AddProduct from './features/products/AddProduct';
 import EditProduct from './features/products/EditProduct';
 
@@ -39,6 +40,12 @@ import Checkout from './features/cart/Checkout';
 import Success from './features/cart/Success';
 import MessageInbox from './features/messages/MessageInbox';
 import MessagesPage from './features/messages/MessagesPage';
+
+import About from './features/pages/About';
+import Privacy from './features/pages/Privacy';
+import Terms from './features/pages/Terms';
+import Contact from './features/pages/Contact';
+import Shop from './features/products/Shop';
 
 function App() {
   const dispatch = useDispatch();
@@ -74,11 +81,15 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route path="/shop" element={<ProductList />} />
+            <Route path="/shop/:id" element={<ProductDetail />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/contact" element={<Contact />} />
 
-            {/* Private */}
+            {/* Private (Authenticated Users) */}
             <Route element={<PrivateRoute />}>
-              <Route path="/products" element={<ProductList />} />
-              <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/success" element={<Success />} />
@@ -90,18 +101,19 @@ function App() {
               <Route path="/orders" element={<Orders />} />
               <Route path="/messages" element={<MessageInbox />} />
               <Route path="/messages/:userId1/:userId2" element={<MessagesPage />} />
+              <Route path="/shop" element={<Shop />} />
             </Route>
 
-            {/* Admin */}
+            {/* Admin Only */}
             <Route element={<AdminRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/admin/users" element={<UsersAdmin />} />
               <Route path="/admin/events" element={<EventsAdmin />} />
-              <Route path="/admin/products" element={<Products />} />
+              <Route path="/admin/messages" element={<DeleteMessage />} />
+              <Route path="/products" element={<Products />} />
               <Route path="/products/add" element={<AddProduct />} />
               <Route path="/products/edit/:id" element={<EditProduct />} />
               <Route path="/events/create" element={<CreateEvent />} />
-              <Route path="/admin/messages" element={<DeleteMessage />} /> {/* ✅ Route added */}
             </Route>
           </Routes>
         </main>

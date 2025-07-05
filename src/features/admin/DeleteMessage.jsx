@@ -9,28 +9,30 @@ function DeleteMessage() {
   const [searchTerm, setSearchTerm] = useState('');
   const role = useSelector((state) => state.user.user?.role?.toLowerCase() || '');
 
+  // ✅ Reusable fetch logic
+  const refreshMessages = async () => {
+    try {
+      const res = await api.get('/messages');
+      const result = Array.isArray(res.data.result)
+        ? res.data.result
+        : res.data.result
+        ? [res.data.result]
+        : [];
+
+      setMessages(
+        result
+          .slice()
+          .sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at))
+      );
+    } catch (err) {
+      console.error('❌ Failed to fetch messages:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const res = await api.get('/messages');
-    const result = Array.isArray(res.data.result)
-  ? res.data.result
-  : res.data.result ? [res.data.result] : [];
-
-setMessages(
-  result
-    .slice()
-    .sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at))
-);
-
-      } catch (err) {
-        console.error('❌ Failed to fetch messages:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMessages();
+    refreshMessages();
   }, []);
 
   const handleDelete = async (id) => {
@@ -38,7 +40,7 @@ setMessages(
 
     try {
       await api.delete(`/admin/message/${id}`);
-      setMessages((prev) => prev.filter((m) => m.id !== id));
+      await refreshMessages(); // ✅ Refresh after delete
     } catch (err) {
       console.error('❌ Delete failed:', err);
       alert('Failed to delete message.');
@@ -47,7 +49,7 @@ setMessages(
 
   if (loading) return <div className="admin-loading">Loading messages...</div>;
 
-  // Group by conversation: sender ↔ receiver
+  // ✅ Group by user pairs (alphabetical)
   const grouped = messages.reduce((acc, msg) => {
     const sender = msg.sender_username || '[Unknown Sender]';
     const receiver = msg.receiver_username || '[Unknown Receiver]';
@@ -69,79 +71,95 @@ setMessages(
         onChange={(e) => setSearchTerm(e.target.value)}
       />
 
-{Object.entries(grouped)
-  .filter(([pair]) =>
-    pair.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-  .map(([pair, msgs]) => (
-    <div key={pair} className="admin-message-group">
-      <h3 className="group-title">💬 Conversation: {pair}</h3>
+      {Object.entries(grouped)
+        .filter(([pair]) =>
+          pair.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .map(([pair, msgs]) => (
+          <div key={pair} className="admin-message-group">
+            <h3 className="group-title">💬 Conversation: {pair}</h3>
 
-      <div className="group-actions">
-        <button
-          className="btn-delete-convo"
-          onClick={() => {
-            if (window.confirm(`Delete all messages in: ${pair}?`)) {
-              const idsToDelete = msgs.map(m => m.id);
-              Promise.all(idsToDelete.map(id => api.delete(`/admin/message/${id}`)))
-                .then(() => {
-                  setMessages(prev => prev.filter(m => !idsToDelete.includes(m.id)));
-                })
-                .catch((err) => {
-                  console.error("❌ Bulk delete error:", err);
-                  alert("Some messages may not have been deleted.");
-                });
-            }
-          }}
-        >
-          🗑️ Delete Conversation
-        </button>
+            <div className="group-actions">
+              <button
+                className="btn-delete-convo"
+                onClick={async () => {
+                  if (window.confirm(`Delete all messages in: ${pair}?`)) {
+                    const idsToDelete = msgs.map((m) => m.id);
+                    try {
+                      await Promise.all(
+                        idsToDelete.map((id) =>
+                          api.delete(`/admin/message/${id}`)
+                        )
+                      );
+                      await refreshMessages(); // ✅ Refresh after bulk delete
+                    } catch (err) {
+                      console.error('❌ Bulk delete error:', err);
+                      alert('Some messages may not have been deleted.');
+                    }
+                  }
+                }}
+              >
+                🗑️ Delete Conversation
+              </button>
 
-        <button
-          className="btn-export"
-          onClick={() => {
-            const text = msgs.map(m =>
-              `[${new Date(m.sent_at).toLocaleString()}] ${m.sender_username} ➝ ${m.receiver_username}: ${m.content}`
-            ).join('\n');
+              <button
+                className="btn-export"
+                onClick={() => {
+                  const text = msgs
+                    .map(
+                      (m) =>
+                        `[${new Date(m.sent_at).toLocaleString()}] ${m.sender_username} ➝ ${m.receiver_username}: ${m.content}`
+                    )
+                    .join('\n');
 
-            const blob = new Blob([text], { type: 'text/plain' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `chat_${pair.replace(/ ↔ /g, '_')}.txt`;
-            link.click();
-          }}
-        >
-          Export Chat
-        </button>
-      </div>
+                  const blob = new Blob([text], { type: 'text/plain' });
+                  const link = document.createElement('a');
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `chat_${pair.replace(/ ↔ /g, '_')}.txt`;
+                  link.click();
+                }}
+              >
+                Export Chat
+              </button>
+            </div>
 
-<ul className="admin-list">
-  {msgs
-    .sort((a, b) => new Date(a.sent_at) - new Date(b.sent_at)) // 🔥 sort by date (oldest → newest)
-    .map((msg) => (
-      <li key={msg.id} className="admin-item">
-        <div className="message-info">
-          <p><strong>From:</strong> {msg.sender_username}</p>
-          <p><strong>To:</strong> {msg.receiver_username}</p>
-          <p><strong>Message:</strong> {msg.content}</p>
-          <p><small>{new Date(msg.sent_at).toLocaleString()}</small></p>
-        </div>
-        {role === 'admin' && (
-          <button
-            onClick={() => handleDelete(msg.id)}
-            className="btn-delete"
-            aria-label={`Delete message ${msg.id}`}
-          >
-             Delete
-          </button>
-        )}
-      </li>
-    ))}
-</ul>
-
-    </div>
-  ))}
-
+            <ul className="admin-list">
+              {msgs
+                .sort(
+                  (a, b) => new Date(a.sent_at) - new Date(b.sent_at)
+                )
+                .map((msg) => (
+                  <li key={msg.id} className="admin-item">
+                    <div className="message-info">
+                      <p>
+                        <strong>From:</strong> {msg.sender_username}
+                      </p>
+                      <p>
+                        <strong>To:</strong> {msg.receiver_username}
+                      </p>
+                      <p>
+                        <strong>Message:</strong> {msg.content}
+                      </p>
+                      <p>
+                        <small>
+                          {new Date(msg.sent_at).toLocaleString()}
+                        </small>
+                      </p>
+                    </div>
+                    {role === 'admin' && (
+                      <button
+                        onClick={() => handleDelete(msg.id)}
+                        className="btn-delete"
+                        aria-label={`Delete message ${msg.id}`}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </li>
+                ))}
+            </ul>
+          </div>
+        ))}
     </div>
   );
 }

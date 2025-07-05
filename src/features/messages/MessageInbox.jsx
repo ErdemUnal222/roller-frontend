@@ -1,10 +1,15 @@
-import { useEffect, useState } from 'react';
+import {
+  useEffect,
+  useState,
+  forwardRef,
+  useImperativeHandle
+} from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import api from '../../api/axios';
 import "/src/styles/main.scss";
 
-function MessageInbox() {
+const MessageInbox = forwardRef((props, ref) => {
   const currentUser = useSelector((state) => state.user.user);
   const currentUserId = currentUser?.id;
 
@@ -12,21 +17,30 @@ function MessageInbox() {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  // 🔄 Inbox refresh function
+  const refreshInbox = async () => {
     if (!currentUserId) return;
-    const fetchInbox = async () => {
-      try {
-        const res = await api.get('/messages/inbox');
-        console.log("📥 Inbox response:", res.data.result);
-        setInbox(res.data.result || []);
-      } catch (err) {
-        console.error('❌ Inbox fetch failed:', err);
-        setError('Failed to load your messages.');
-      }
-    };
-    fetchInbox();
+    try {
+      const res = await api.get('/messages/inbox');
+      console.log("📥 Inbox refreshed:", res.data.result);
+      setInbox(res.data.result || []);
+    } catch (err) {
+      console.error('❌ Inbox fetch failed:', err);
+      setError('Failed to load your messages.');
+    }
+  };
+
+  // 👇 Expose refreshInbox to parent via ref
+  useImperativeHandle(ref, () => ({
+    refreshInbox
+  }));
+
+  // 📥 Fetch inbox on mount
+  useEffect(() => {
+    refreshInbox();
   }, [currentUserId]);
 
+  // 👥 Fetch all other users
   useEffect(() => {
     if (!currentUserId) return;
     const fetchUsers = async () => {
@@ -48,50 +62,42 @@ function MessageInbox() {
 
       {error && <p className="inbox-error" role="alert">{error}</p>}
 
-      <div className="inbox-section">
-        {inbox.length === 0 ? (
-          <p className="inbox-empty">No conversations yet.</p>
-        ) : (
-          <ul className="inbox-list">
-            {inbox.map((msg) => {
-              const otherUserId = msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id;
-              const otherUsername =
-                msg.sender_id === currentUserId
-                  ? msg.receiver_username
-                  : msg.sender_username;
+  <div className="inbox-section">
+  {inbox.length === 0 || inbox.filter(msg => msg.sender_id && msg.receiver_id && msg.id).length === 0 ? (
+    <p className="inbox-empty"></p>
+  ) : (
+    <ul className="inbox-list">
+      {inbox.map((msg) => {
+        const otherUserId = msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id;
+        const otherUsername =
+          msg.sender_id === currentUserId
+            ? msg.receiver_username
+            : msg.sender_username;
 
-              // ✅ Debug each message object
-              console.log("💬 msg record:", msg);
-              console.log("📨 Link debug:", {
-                currentUserId,
-                otherUserId,
-                typeOfCurrentUserId: typeof currentUserId,
-                typeOfOtherUserId: typeof otherUserId
-              });
+        if (!otherUserId || isNaN(otherUserId)) {
+          console.warn("⚠️ Skipping malformed message:", msg);
+          return null;
+        }
 
-              if (!otherUserId || isNaN(otherUserId)) {
-                console.warn("⚠️ Skipping malformed message:", msg);
-                return null;
-              }
+        return (
+          <li key={msg.id} className="inbox-item">
+            <Link
+              to={`/messages/${currentUserId}/${otherUserId}`}
+              className="inbox-link"
+              aria-label={`Open chat with ${otherUsername || 'user'}`}
+            >
+              {otherUsername || 'Unknown user'}
+              {!msg.seen && msg.receiver_id === currentUserId && (
+                <span className="inbox-badge" aria-label="New message">●</span>
+              )}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  )}
+</div>
 
-              return (
-                <li key={msg.id} className="inbox-item">
-                  <Link
-                    to={`/messages/${currentUserId}/${otherUserId}`}
-                    className="inbox-link"
-                    aria-label={`Open chat with ${otherUsername || 'user'}`}
-                  >
-                    {otherUsername || 'Unknown user'}
-                    {!msg.seen && msg.receiver_id === currentUserId && (
-                      <span className="inbox-badge" aria-label="New message">●</span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
 
       <div className="inbox-divider" />
 
@@ -118,6 +124,6 @@ function MessageInbox() {
       </div>
     </section>
   );
-}
+});
 
 export default MessageInbox;

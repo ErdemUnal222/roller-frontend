@@ -1,109 +1,69 @@
 import { useEffect, useState } from 'react';
-import { getAllProducts, createProduct, deleteProduct } from '../../api/productService';
-import { Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { getOneProduct } from '../../api/productService';
 import '/src/styles/main.scss';
 
-function Products() {
-  // State for products and new product form
-  const [products, setProducts] = useState([]);
-  const [newProduct, setNewProduct] = useState({ title: '', description: '', price: '' });
+function ProductDetail() {
+  const { id } = useParams();
+  const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Fetch all products on component mount
   useEffect(() => {
-    async function fetchData() {
+    async function fetchProduct() {
       try {
-        const data = await getAllProducts();
-        setProducts(Array.isArray(data.result) ? data.result : []);
-      } catch (error) {
-        console.error('Error loading products:', error);
-        setProducts([]);
+        const data = await getOneProduct(id);
+        if (data && data.result) {
+          setProduct(data.result);
+        } else {
+          setError('Product not found.');
+        }
+      } catch (err) {
+        console.error('Error fetching product:', err);
+        setError('Failed to load product details.');
       } finally {
         setLoading(false);
       }
     }
 
-    fetchData();
-  }, []);
+    fetchProduct();
+  }, [id]);
 
-  // Handle new product submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const created = await createProduct(newProduct);
-      setProducts([...products, created]); // Update product list
-      setNewProduct({ title: '', description: '', price: '' }); // Reset form
-    } catch (err) {
-      console.error('Error creating product:', err);
-    }
-  };
+  if (loading) return <div className="loading">Loading product...</div>;
+  if (error) return <div className="form-error">{error}</div>;
+  if (!product) return null;
 
-  // Handle product deletion
-  const handleDelete = async (id) => {
-    const confirm = window.confirm('Are you sure you want to delete this product?');
-    if (!confirm) return;
-
-    try {
-      await deleteProduct(id);
-      setProducts(products.filter((p) => p.id !== id)); // Remove deleted product from list
-    } catch (err) {
-      console.error('Error deleting product:', err);
-    }
-  };
+  const formattedDate = new Date(product.created_at).toLocaleDateString('en-GB');
+  const imageUrl = product.picture
+    ? `http://ihsanerdemunal.ide.3wa.io:9500/uploads/${product.picture}`
+    : null;
 
   return (
-    <div className="admin-products-container">
-      <h2 className="admin-products-title">Manage Products</h2>
+    <div className="product-detail-container">
+      <h2 className="product-detail-title">{product.title}</h2>
 
-      {/* New product form */}
-      <form onSubmit={handleSubmit} className="admin-product-form">
-        <input
-          type="text"
-          placeholder="Product title"
-          value={newProduct.title}
-          onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
-          required
+      {imageUrl && (
+        <img
+          src={imageUrl}
+          alt={product.alt || 'Product image'}
+          className="product-detail-image"
         />
-        <textarea
-          placeholder="Description"
-          value={newProduct.description}
-          onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-          required
-        />
-        <input
-          type="number"
-          step="0.01"
-          placeholder="Price"
-          value={newProduct.price}
-          onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-          required
-        />
-        <button type="submit">Add Product</button>
-      </form>
-
-      {/* Product list or loading indicator */}
-      {loading ? (
-        <div className="admin-loading">Loading products...</div>
-      ) : (
-        <ul className="admin-product-list">
-          {products.map((product) => (
-            <li key={product.id} className="admin-product-item">
-              <div>
-                <p className="admin-product-name">{product.title}</p>
-                <p className="admin-product-price">{product.price} €</p>
-              </div>
-              <div className="admin-product-actions">
-                <Link to={`/products/edit/${product.id}`}>Edit</Link>
-                <button onClick={() => handleDelete(product.id)} className="delete">
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
       )}
+
+      <p className="product-detail-description">{product.description}</p>
+
+      <p className="product-detail-price"><strong>Price:</strong> {product.price} €</p>
+
+      <p className="product-detail-stock">
+        <strong>Availability:</strong>{' '}
+        {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+      </p>
+
+      <p className="product-detail-date">
+        <strong>Added on:</strong> {formattedDate}
+      </p>
     </div>
   );
 }
 
-export default Products;
+export default ProductDetail;

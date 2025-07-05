@@ -1,20 +1,29 @@
 @use './variables' as *;
 
 /* --- Events Page Container --- */
-.events-page {
-  padding: 1rem;
+.events-page,
+.public-events-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  font-family: 'Inter', sans-serif;
+  color: #1a1a1a;
 }
 
-.events-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
+.events-title,
+.public-events-title {
+  font-size: 2.25rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: #111;
 }
 
 .events-subtitle {
   font-size: 1.25rem;
   font-weight: 600;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
 /* --- Event Form --- */
@@ -26,82 +35,97 @@
 
   input,
   textarea {
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 0.25rem;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+  }
+
+  label {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
   }
 
   button {
     background-color: #2563eb;
     color: white;
-    padding: 0.5rem;
+    padding: 0.75rem;
     border: none;
-    border-radius: 0.25rem;
-    font-weight: 500;
+    border-radius: 0.5rem;
+    font-weight: 600;
     cursor: pointer;
+    transition: background-color 0.2s ease;
 
     &:hover {
       background-color: #1e40af;
     }
   }
 
-  label {
-    font-weight: 600;
-  }
-
   .event-image-preview {
     width: 100%;
     height: 10rem;
     object-fit: cover;
-    border-radius: 0.25rem;
-    border: 1px solid #ccc;
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
   }
 }
 
 /* --- Event Grid --- */
-.event-grid {
+.event-grid,
+.public-event-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
 }
 
 /* --- Event Card --- */
-.event-card {
-  border: 1px solid #ccc;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+.event-card,
+.public-event-card {
+  background-color: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 
-  .event-image {
-    width: 100%;
-    height: 10rem;
-    object-fit: cover;
-    border-radius: 0.25rem;
-    margin-bottom: 0.5rem;
+  &:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
   }
 
   .event-name {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     font-weight: 600;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
+    color: #111;
   }
 
   .event-date {
-    font-size: 0.875rem;
+    font-size: 0.95rem;
     color: #666;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    display: block;
   }
 
   .event-description {
-    font-size: 0.95rem;
-    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #333;
+    margin-bottom: 1.25rem;
   }
 
   .event-link {
-    color: #2563eb;
-    text-decoration: underline;
     display: inline-block;
-    margin-bottom: 0.5rem;
+    font-weight: 500;
+    text-decoration: none;
+    color: #2563eb;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: #1d4ed8;
+      border-color: #1d4ed8;
+    }
   }
 
   .event-edit-link {
@@ -110,13 +134,24 @@
     text-decoration: underline;
     cursor: pointer;
   }
+
+  .event-image {
+    width: 100%;
+    height: 10rem;
+    object-fit: cover;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
 }
 
 /* --- Event Details --- */
 .event-details {
-  max-width: 600px;
+  max-width: 700px;
   margin: 2rem auto;
-  padding: 1rem;
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .event-title {
@@ -130,15 +165,15 @@
   width: 100%;
   max-height: 16rem;
   object-fit: cover;
-  border-radius: 0.25rem;
+  border-radius: 0.5rem;
   margin-bottom: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .event-description {
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
   font-size: 1rem;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .event-meta {
@@ -149,7 +184,7 @@
 
 /* --- Event Upload --- */
 .event-upload {
-  margin: 1.5rem 0;
+  margin: 2rem 0;
 
   label {
     display: block;
@@ -157,7 +192,7 @@
     margin-bottom: 0.5rem;
   }
 
-  input[type="file"] {
+  input[type='file'] {
     display: block;
     margin-bottom: 0.5rem;
   }
@@ -165,11 +200,12 @@
   button {
     background-color: #facc15;
     border: none;
-    color: white;
+    color: #111;
     padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
+    border-radius: 0.5rem;
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
 
     &:hover {
       background-color: #eab308;
@@ -181,12 +217,13 @@
 .event-button {
   display: inline-block;
   margin-top: 1rem;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.25rem;
   font-weight: 600;
-  border-radius: 0.25rem;
+  border-radius: 0.5rem;
   border: none;
   cursor: pointer;
   color: white;
+  transition: background-color 0.2s ease;
 
   &.register {
     background-color: #2563eb;
@@ -213,7 +250,17 @@
   font-weight: 500;
 }
 
-.event-empty {
+.event-empty,
+.public-events-error {
   color: #dc2626;
   font-weight: 500;
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.loading-msg {
+  text-align: center;
+  color: #888;
+  font-size: 1rem;
+  margin-top: 2rem;
 }
