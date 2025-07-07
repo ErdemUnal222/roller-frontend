@@ -1,131 +1,192 @@
+import { useDispatch, useSelector } from 'react-redux';
+import { clearCart } from '/src/redux/cartSlice';
+import api from '/src/api/axios';
 import { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { clearCart } from '../../redux/cartSlice';
 import { useNavigate } from 'react-router-dom';
 import '/src/styles/main.scss';
 
 function Checkout() {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // Get cart items and user from Redux store
   const cartItems = useSelector((state) => state.cart.items);
-  const auth = useSelector((state) => state.user); // assumes you store user info in auth state
+  const user = useSelector((state) => state.user.user);
 
-  const [form, setForm] = useState({ name: '', email: '', address: '' });
-
-  const total = cartItems.reduce(
+  // Calculate total price and total quantity from cart items
+  const totalPrice = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+  const totalProducts = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  // Controlled form state for credit card and billing info
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvc, setCvc] = useState('');
+  const [billingName, setBillingName] = useState('');
+  const [billingAddress, setBillingAddress] = useState('');
+
+  // For displaying validation errors and API errors
+  const [error, setError] = useState('');
+
+  // For disabling submit button during "payment processing"
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Basic client-side validation for form inputs
+  const validateForm = () => {
+    if (
+      cardNumber.trim().length !== 16 ||
+      !/^\d+$/.test(cardNumber) ||
+      expiryDate.trim().length !== 5 || // format MM/YY
+      !/^\d{2}\/\d{2}$/.test(expiryDate) ||
+      cvc.trim().length < 3 ||
+      !/^\d{3,4}$/.test(cvc) ||
+      billingName.trim() === '' ||
+      billingAddress.trim() === ''
+    ) {
+      setError('Please fill out all fields with valid information.');
+      return false;
+    }
+    if (cartItems.length === 0) {
+      setError('Your cart is empty.');
+      return false;
+    }
+    setError('');
+    return true;
   };
 
+  // Form submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!validateForm()) return;
+
+    setIsProcessing(true);
+    setError('');
+
     try {
-      const token = localStorage.getItem("token");
-      const userId = auth?.user?.id;
+      // Build order payload matching backend expected schema
+      const orderPayload = {
+        userId: user?.id,
+        totalAmount: totalPrice,
+        items: cartItems.map(({ id, title, price, quantity }) => ({
+          productId: id,    // Note this key must be productId for backend
+          name: title,
+          price,
+          quantity,
+        })),
+      };
 
-      if (!userId || !token) {
-        alert("You must be logged in to complete the order.");
-        return;
-      }
+      // POST order to backend checkout route
+      const response = await api.post('/orders/checkout', orderPayload);
 
-      const response = await fetch('http://localhost:9500/orders/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          userId,
-          totalAmount: total,
-          items: cartItems.map((item) => ({
-            name: item.title,
-            price: item.price,
-            quantity: item.quantity
-          }))
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.url) {
-        // clear cart and redirect to Stripe
-        dispatch(clearCart());
-        window.location.href = data.url;
+      if (response.status === 201 && response.data.url) {
+        // Redirect user to Stripe checkout page
+        window.location.href = response.data.url;
       } else {
-        alert("Failed to create Stripe session.");
+        setError('Failed to start payment process.');
+        setIsProcessing(false);
       }
     } catch (err) {
-      console.error("Checkout error:", err);
-      alert("Something went wrong during checkout. Please try again.");
+      console.error('Order submission failed:', err);
+      setError('Failed to process order. Please try again.');
+      setIsProcessing(false);
     }
   };
 
   return (
-    <div className="checkout-container" role="main" aria-labelledby="checkout-title">
+    <main className="checkout-container" role="main" aria-labelledby="checkout-title">
       <h1 id="checkout-title" className="checkout-title">Checkout</h1>
 
-      {/* Order Summary */}
-      <section className="order-summary">
-        <h2 className="summary-heading">Order Summary</h2>
-        <ul className="summary-items">
-          {cartItems.map((item) => (
-            <li key={item.id} className="summary-item">
-              <div className="item-info">
-                <p className="item-title">{item.title}</p>
-                <span className="item-quantity">
-                  {item.quantity} × €{item.price.toFixed(2)}
-                </span>
-              </div>
-              <div className="item-total">
-                €{(item.price * item.quantity).toFixed(2)}
-              </div>
-            </li>
-          ))}
-        </ul>
-        <div className="summary-total">
-          <strong>Total:</strong> €{total.toFixed(2)}
-        </div>
-      </section>
-
-      {/* Checkout Form */}
-      <form onSubmit={handleSubmit} className="checkout-form">
+      <form onSubmit={handleSubmit} className="checkout-form" noValidate>
+        <label htmlFor="cardNumber">Card Number</label>
         <input
+          id="cardNumber"
+          name="cardNumber"
           type="text"
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          placeholder="Full Name"
+          inputMode="numeric"
+          maxLength={16}
+          value={cardNumber}
+          onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, ''))}
+          placeholder="1234123412341234"
           required
-          className="checkout-input"
+          aria-required="true"
+          aria-describedby="cardNumberHelp"
         />
+        <small id="cardNumberHelp">Enter 16 digit card number</small>
+
+        <label htmlFor="expiryDate">Expiry Date (MM/YY)</label>
         <input
-          type="email"
-          name="email"
-          value={form.email}
-          onChange={handleChange}
-          placeholder="Email"
+          id="expiryDate"
+          name="expiryDate"
+          type="text"
+          maxLength={5}
+          value={expiryDate}
+          onChange={(e) => setExpiryDate(e.target.value)}
+          placeholder="MM/YY"
           required
-          className="checkout-input"
+          aria-required="true"
+          aria-describedby="expiryDateHelp"
         />
+        <small id="expiryDateHelp">Format: MM/YY</small>
+
+        <label htmlFor="cvc">CVC</label>
+        <input
+          id="cvc"
+          name="cvc"
+          type="text"
+          inputMode="numeric"
+          maxLength={4}
+          value={cvc}
+          onChange={(e) => setCvc(e.target.value.replace(/\D/g, ''))}
+          placeholder="123"
+          required
+          aria-required="true"
+          aria-describedby="cvcHelp"
+        />
+        <small id="cvcHelp">3 or 4 digit security code</small>
+
+        <label htmlFor="billingName">Name on Card</label>
+        <input
+          id="billingName"
+          name="billingName"
+          type="text"
+          value={billingName}
+          onChange={(e) => setBillingName(e.target.value)}
+          placeholder="John Doe"
+          required
+          aria-required="true"
+        />
+
+        <label htmlFor="billingAddress">Billing Address</label>
         <textarea
-          name="address"
-          value={form.address}
-          onChange={handleChange}
-          placeholder="Shipping Address"
+          id="billingAddress"
+          name="billingAddress"
+          value={billingAddress}
+          onChange={(e) => setBillingAddress(e.target.value)}
+          placeholder="123 Main St, City, Country"
           required
-          className="checkout-input"
-          rows="4"
-        />
-        <button type="submit" className="checkout-button">
-          Confirm and Pay
+          aria-required="true"
+          rows={3}
+        ></textarea>
+
+        {error && (
+          <p className="form-error" role="alert" aria-live="assertive">
+            {error}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          className="checkout-button"
+          disabled={isProcessing}
+          aria-disabled={isProcessing}
+        >
+          {isProcessing ? 'Processing...' : 'Pay Now'}
         </button>
       </form>
-    </div>
+    </main>
   );
 }
 

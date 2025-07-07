@@ -7,34 +7,36 @@ import "/src/styles/main.scss";
 
 /**
  * Register Component
- * Handles user registration with form validation, error handling, and redirection
+ * Allows a user to create a new account by filling out a form.
+ * Submits data to the backend API, handles errors, and redirects on success.
  */
 function Register() {
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Hook used to redirect the user after successful registration
 
-  // Form field state
+  // State for each input field in the form
   const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [address, setAddress] = useState('');
-  const [zip, setZip] = useState('');
-  const [city, setCity] = useState('');
+  const [lastName, setLastName]   = useState('');
+  const [email, setEmail]         = useState('');
+  const [password, setPassword]   = useState('');
+  const [address, setAddress]     = useState('');
+  const [zip, setZip]             = useState('');
+  const [city, setCity]           = useState('');
 
-  // State for managing error and loading UI
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  // State to handle error message and loading state
+  const [error, setError]         = useState('');
+  const [loading, setLoading]     = useState(false);
 
   /**
-   * Form submit handler
-   * Sends user data to API and redirects to login page on success
+   * Form submission handler
+   * Sends a POST request to the backend to create a new user account.
    */
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault();       // Prevent form from refreshing the page
     setError('');
     setLoading(true);
 
     try {
+      // Send user registration data to the backend API
       const response = await api.post('/auth/signup', {
         firstName,
         lastName,
@@ -46,29 +48,38 @@ function Register() {
       });
 
       console.log('Registration success:', response.data);
+
+      // Redirect the user to the login page
       navigate('/login');
     } catch (err) {
       console.error('Registration failed:', err);
 
-      // Handle different error types
+      // Error handling based on error type
       if (err.response) {
+        // Backend returned an error message
         setError(err.response.data?.msg || 'Registration failed.');
       } else if (err.request) {
+        // No response from backend
         setError('No response from server.');
       } else {
+        // Something else went wrong
         setError('Unexpected error occurred.');
       }
     } finally {
-      setLoading(false);
+      setLoading(false); // Remove loading state whether success or error
     }
   };
 
   return (
     <main className="register-page" role="main" aria-labelledby="register-title">
-      <form onSubmit={handleSubmit} className="register-form" aria-describedby="register-instructions">
+      <form
+        onSubmit={handleSubmit}
+        className="register-form"
+        aria-describedby="register-instructions"
+      >
         <h1 id="register-title" className="form-title">Register</h1>
 
-        {/* First Name */}
+        {/* Input for First Name */}
         <label htmlFor="firstName" className="sr-only">First Name</label>
         <input
           id="firstName"
@@ -80,7 +91,7 @@ function Register() {
           required
         />
 
-        {/* Last Name */}
+        {/* Input for Last Name */}
         <label htmlFor="lastName" className="sr-only">Last Name</label>
         <input
           id="lastName"
@@ -92,7 +103,7 @@ function Register() {
           required
         />
 
-        {/* Email */}
+        {/* Input for Email */}
         <label htmlFor="email" className="sr-only">Email</label>
         <input
           id="email"
@@ -104,7 +115,7 @@ function Register() {
           required
         />
 
-        {/* Password */}
+        {/* Input for Password */}
         <label htmlFor="password" className="sr-only">Password</label>
         <input
           id="password"
@@ -116,7 +127,7 @@ function Register() {
           required
         />
 
-        {/* Address */}
+        {/* Input for Address */}
         <label htmlFor="address" className="sr-only">Address</label>
         <input
           id="address"
@@ -128,7 +139,7 @@ function Register() {
           required
         />
 
-        {/* Zip Code */}
+        {/* Input for Zip Code */}
         <label htmlFor="zip" className="sr-only">Zip Code</label>
         <input
           id="zip"
@@ -140,7 +151,7 @@ function Register() {
           required
         />
 
-        {/* City */}
+        {/* Input for City */}
         <label htmlFor="city" className="sr-only">City</label>
         <input
           id="city"
@@ -152,14 +163,14 @@ function Register() {
           required
         />
 
-        {/* Error message */}
+        {/* Display error message if exists */}
         {error && (
           <p className="form-error" role="alert" aria-live="assertive">
             {error}
           </p>
         )}
 
-        {/* Submit button */}
+        {/* Submit button with loading indicator */}
         <button
           type="submit"
           className="form-button form-button-green"

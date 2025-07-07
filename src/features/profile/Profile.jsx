@@ -4,24 +4,35 @@ import { setUser } from '../../redux/userSlice';
 import api from '../../api/axios';
 import '/src/styles/main.scss';
 
+/**
+ * Profile Component
+ * This component allows the logged-in user to:
+ * - View their profile information
+ * - Edit and update profile fields
+ * - Upload or change their profile picture
+ * It syncs with the Redux store and interacts with the backend.
+ */
 const Profile = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch(); // Used to update user info in the global Redux state
 
-  // State for profile data and UI status
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
-  const [selectedFile, setSelectedFile] = useState(null);
+  // Local state to hold profile data and form behavior
+  const [profile, setProfile] = useState(null);       // User profile data
+  const [loading, setLoading] = useState(true);       // Controls loading state on mount
+  const [editing, setEditing] = useState(false);      // Indicates if the form is in "edit mode"
+  const [saving, setSaving] = useState(false);        // Indicates if the form is being submitted
+  const [message, setMessage] = useState('');         // Status message (success or error)
+  const [selectedFile, setSelectedFile] = useState(null); // Holds the selected file for upload
 
-  // Fetch user profile on component mount
+  /**
+   * useEffect to fetch user profile when the component loads.
+   * Sends a GET request to /me and saves the result in state and Redux.
+   */
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await api.get('/me');
-        setProfile(response.data.user);
-        dispatch(setUser(response.data.user)); // Sync Redux store
+        const response = await api.get('/me'); // Fetch user info from backend
+        setProfile(response.data.user);        // Set local state
+        dispatch(setUser(response.data.user)); // Update Redux store
       } catch (error) {
         console.error('Error fetching profile:', error);
         setMessage('Failed to load profile. Please login again.');
@@ -32,24 +43,32 @@ const Profile = () => {
     fetchProfile();
   }, [dispatch]);
 
-  // Handle input field changes
+  /**
+   * Update profile state when user types in an input field.
+   * Applies to all editable fields.
+   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProfile((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle file selection for image upload
+  /**
+   * Save the selected image file in state when the user uploads a profile picture.
+   */
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
   };
 
-  // Save updated profile (with optional image)
+  /**
+   * Handle saving changes (with or without profile picture update).
+   * Submits the form to the backend via PUT and POST.
+   */
   const handleSave = async () => {
     setSaving(true);
     setMessage('');
 
     try {
-      // Build the updated profile payload
+      // Build the fields to update
       const updatedData = {
         firstName: profile.firstName,
         lastName: profile.lastName,
@@ -60,7 +79,7 @@ const Profile = () => {
         phone: profile.phone,
       };
 
-      // Handle profile picture upload if provided
+      // Handle image upload if a new picture is selected
       if (selectedFile) {
         const formData = new FormData();
         formData.append('picture', selectedFile);
@@ -69,6 +88,7 @@ const Profile = () => {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
 
+        // Update local profile with the filename
         setProfile((prev) => ({
           ...prev,
           picture: uploadResponse.data.filename,
@@ -77,11 +97,12 @@ const Profile = () => {
         updatedData.picture = uploadResponse.data.filename;
       }
 
-      // Submit profile updates
+      // Send profile update request
       await api.put(`/user/${profile.id}`, updatedData);
+
       setMessage('Profile updated successfully.');
-      setEditing(false);
-      setSelectedFile(null);
+      setEditing(false);      // Exit editing mode
+      setSelectedFile(null);  // Clear file input
     } catch (error) {
       console.error('Error updating profile:', error);
       setMessage('Error updating profile.');
@@ -90,19 +111,22 @@ const Profile = () => {
     }
   };
 
-  // Display loading state
+  // Render loading indicator
   if (loading) return <div className="profile-message">Loading profile...</div>;
 
-  // Display error or missing profile
-  if (!profile) return <div className="profile-message error">{message || 'Profile not found.'}</div>;
+  // If profile not found or error
+  if (!profile) {
+    return <div className="profile-message error">{message || 'Profile not found.'}</div>;
+  }
 
   return (
     <div className="profile-container">
       <h1 className="profile-title">My Profile</h1>
 
+      {/* Feedback message (success or error) */}
       {message && <p className="profile-message">{message}</p>}
 
-      {/* Display profile image if available */}
+      {/* Display profile picture if available */}
       {profile.picture && (
         <div className="profile-image-wrapper">
           <img
@@ -113,10 +137,18 @@ const Profile = () => {
         </div>
       )}
 
-      {/* Editable form */}
+      {/* Editable form if editing mode is active */}
       {editing ? (
         <>
-          <input type="file" accept="image/*" onChange={handleFileChange} className="profile-file-input" />
+          {/* File input for uploading new profile picture */}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="profile-file-input"
+          />
+
+          {/* Input fields for editable profile fields */}
           <div className="profile-form">
             {['firstName', 'lastName', 'email', 'address', 'zip', 'city', 'phone'].map((field) => (
               <input
@@ -131,7 +163,7 @@ const Profile = () => {
           </div>
         </>
       ) : (
-        // Read-only display
+        // Display read-only version of the profile
         <div className="profile-details">
           <p><strong>First Name:</strong> {profile.firstName}</p>
           <p><strong>Last Name:</strong> {profile.lastName}</p>
@@ -144,7 +176,7 @@ const Profile = () => {
         </div>
       )}
 
-      {/* Action buttons */}
+      {/* Button actions: Save or Edit */}
       <div className="profile-actions">
         {editing ? (
           <button

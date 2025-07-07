@@ -1,16 +1,23 @@
 // /src/api/events.js
-// Handles all API calls related to event management (CRUD operations)
+// This module defines all functions for communicating with the backend API
+// regarding events. It covers full CRUD operations: create, read, update, delete.
 
-import API from './axios';
+import API from './axios'; // Import the configured Axios instance with token support
+
+// -----------------------------------------------------------
+// 1. GET ALL EVENTS
+// -----------------------------------------------------------
 
 /**
- * Fetch all events from the backend.
- * Used for listing events (public or admin view).
+ * Fetch the list of all events from the backend.
+ * This can be used to show events on the homepage or admin dashboard.
+ * 
  */
 export const getAllEvents = async () => {
   try {
+    // Send a GET request to /events endpoint
     const response = await API.get('/events');
-    return response.data.result;
+    return response.data.result; // Return the result from server response
   } catch (err) {
     console.error('getAllEvents error:', err);
     throw (
@@ -19,10 +26,14 @@ export const getAllEvents = async () => {
   }
 };
 
+// -----------------------------------------------------------
+// 2. GET ONE EVENT BY ID
+// -----------------------------------------------------------
+
 /**
- * Fetch a single event by its ID.
- * Used for event detail view.
- * @param {string|number} id - The ID of the event to fetch
+ * Fetch detailed information about a single event.
+ * This is used when viewing the full details of an event (e.g., on an event page).
+ * 
  */
 export const getEventById = async (id) => {
   try {
@@ -36,14 +47,18 @@ export const getEventById = async (id) => {
   }
 };
 
+// -----------------------------------------------------------
+// 3. CREATE A NEW EVENT
+// -----------------------------------------------------------
+
 /**
- * Create a new event.
- * Typically used by admins from the admin dashboard.
- * @param {Object} eventData - The form data for the new event
+ * Submit a new event to the backend.
+ * This is typically done by an admin through the dashboard interface.
+ * 
  */
 export const createEvent = async (eventData) => {
   try {
-    const response = await API.post('/events', eventData);
+    const response = await API.post('/events', eventData); // POST request to backend
     return response.data;
   } catch (err) {
     console.error('createEvent error:', err);
@@ -53,11 +68,14 @@ export const createEvent = async (eventData) => {
   }
 };
 
+// -----------------------------------------------------------
+// 4. UPDATE AN EXISTING EVENT
+// -----------------------------------------------------------
+
 /**
- * Update an existing event.
- * Only accessible by authenticated users with proper permissions.
- * @param {string|number} id - The ID of the event to update
- * @param {Object} eventData - Updated fields for the event
+ * Update an existing event’s data.
+ * This is used when an admin wants to edit an event already created.
+ * 
  */
 export const updateEvent = async (id, eventData) => {
   try {
@@ -71,10 +89,14 @@ export const updateEvent = async (id, eventData) => {
   }
 };
 
+// -----------------------------------------------------------
+// 5. DELETE AN EVENT
+// -----------------------------------------------------------
+
 /**
- * Delete an event by ID.
- * This operation is typically restricted to admin users.
- * @param {string|number} id - The ID of the event to delete
+ * Permanently delete an event from the backend.
+ * Only authorized users (usually admins) can perform this action.
+ * 
  */
 export const deleteEvent = async (id) => {
   try {

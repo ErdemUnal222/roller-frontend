@@ -2,36 +2,46 @@ import { useEffect, useState } from 'react';
 import { getAllOrders, createOrder } from '../../api/orderService';
 import '/src/styles/main.scss';
 
+/**
+ * Orders Component
+ * Allows users to view their order history and place new orders manually.
+ */
 function Orders() {
-  // State to store the list of orders
+  // State to store the list of all retrieved orders
   const [orders, setOrders] = useState([]);
 
-  // State to manage the new order form
+  // State to manage the form input for creating a new order
   const [newOrder, setNewOrder] = useState({ productId: '', quantity: 1 });
 
-  // Fetch all orders on component mount
+  /**
+   * useEffect hook to load all existing orders on component mount.
+   * This ensures the UI is populated with current order data.
+   */
   useEffect(() => {
     async function fetchOrders() {
       try {
-        const data = await getAllOrders(); // Fetch orders from the API
-        setOrders(data); // Update the state with the fetched orders
+        const data = await getAllOrders(); // Fetch all orders from backend
+        setOrders(data); // Store them in local state
       } catch (err) {
-        console.error('Error fetching orders:', err);
+        console.error('Error fetching orders:', err); // Log any issues
       }
     }
 
-    fetchOrders();
+    fetchOrders(); // Invoke on mount
   }, []);
 
-  // Handle form submission to create a new order
+  /**
+   * Form submission handler to create a new order.
+   * Sends data to the API and updates the UI immediately.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const createdOrder = await createOrder(newOrder); // API call to create the order
-      setOrders([...orders, createdOrder]); // Append the new order to the existing list
-      setNewOrder({ productId: '', quantity: 1 }); // Reset the form
+      const createdOrder = await createOrder(newOrder); // Call backend API
+      setOrders([...orders, createdOrder]); // Add new order to UI
+      setNewOrder({ productId: '', quantity: 1 }); // Clear form fields
     } catch (err) {
-      console.error('Error creating order:', err);
+      console.error('Error creating order:', err); // Handle any errors
     }
   };
 
@@ -39,7 +49,7 @@ function Orders() {
     <div className="orders-container">
       <h2 className="orders-title">My Orders</h2>
 
-      {/* Order creation form */}
+      {/* Order Creation Form */}
       <form onSubmit={handleSubmit} className="orders-form">
         <input
           type="text"
@@ -47,19 +57,23 @@ function Orders() {
           value={newOrder.productId}
           onChange={(e) => setNewOrder({ ...newOrder, productId: e.target.value })}
           required
+          aria-label="Enter product ID"
         />
         <input
           type="number"
           min="1"
           placeholder="Quantity"
           value={newOrder.quantity}
-          onChange={(e) => setNewOrder({ ...newOrder, quantity: parseInt(e.target.value) })}
+          onChange={(e) =>
+            setNewOrder({ ...newOrder, quantity: parseInt(e.target.value, 10) })
+          }
           required
+          aria-label="Enter quantity"
         />
         <button type="submit">Place Order</button>
       </form>
 
-      {/* Orders list */}
+      {/* Order History List */}
       <ul className="orders-list">
         {orders.map((order) => (
           <li key={order.id}>

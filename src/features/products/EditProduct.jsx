@@ -3,10 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import '../../styles/main.scss';
 
+/**
+ * EditProduct Component
+ * Allows an admin to edit an existing product's details and optionally update the product image.
+ */
 function EditProduct() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const { id } = useParams(); // Get product ID from the URL
+  const navigate = useNavigate(); // For programmatic navigation
 
+  // State for the product's editable fields
   const [product, setProduct] = useState({
     title: '',
     description: '',
@@ -15,20 +20,27 @@ function EditProduct() {
     alt: '',
   });
 
+  // State for the uploaded image file and preview
   const [imageFile, setImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+
+  // Loading and feedback states
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [success, setSuccess] = useState('');
 
+  /**
+   * Fetch the existing product data on component mount
+   */
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const response = await api.get(`/products/${id}`);
-        const result = response.data?.result?.[0];
+        const result = response.data?.result?.[0]; // Get the first result (product)
         if (result) {
-          setProduct(result);
+          setProduct(result); // Fill form with existing product data
           if (result.picture) {
+            // Set preview image if picture exists
             setPreviewUrl(`http://ihsanerdemunal.ide.3wa.io:9500/uploads/${result.picture}`);
           }
         }
@@ -43,52 +55,78 @@ function EditProduct() {
     fetchProduct();
   }, [id]);
 
+  /**
+   * Handle changes in the text inputs
+   */
   const handleChange = (e) => {
     setProduct({ ...product, [e.target.name]: e.target.value });
   };
 
+  /**
+   * Handle file input changes (image)
+   * Shows image preview and stores the file
+   */
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setImageFile(file);
     if (file) {
-      setPreviewUrl(URL.createObjectURL(file));
+      setPreviewUrl(URL.createObjectURL(file)); // Temporary preview URL
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  /**
+   * Handle form submission to update the product
+   */
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const formData = new FormData();
-    for (let key in product) {
-      formData.append(key, product[key]);
-    }
-
-    if (imageFile) {
-      formData.append('picture', imageFile);
-    }
-
-    try {
-      await api.put(`/products/edit/${id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        withCredentials: true,
-      });
-      setSuccess('Product updated successfully!');
-      setTimeout(() => navigate('/products'), 1000);
-    } catch (err) {
-      console.error('Error updating product:', err);
-      setMessage('Error updating product');
-    }
+  // Defensive conversion and ensure all fields are present
+  const sanitizedProduct = {
+    title: product.title || '',
+    description: product.description || '',
+    price: parseFloat(product.price) || 0,
+    stock: parseInt(product.stock) || 0,
+    alt: product.alt || '',
   };
 
+  const formData = new FormData();
+
+  // Append all fields, even if empty strings (to overwrite)
+  for (let key in sanitizedProduct) {
+    formData.append(key, sanitizedProduct[key]);
+  }
+
+  if (imageFile) {
+    formData.append('picture', imageFile);
+  }
+
+  try {
+    await api.put(`/products/edit/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      withCredentials: true,
+    });
+    setSuccess('Product updated successfully!');
+    setTimeout(() => navigate('/products'), 1000);
+  } catch (err) {
+    console.error('Error updating product:', err);
+    setMessage('Error updating product');
+  }
+};
+
+
+
+  // Show loading spinner or text while fetching product
   if (loading) return <div className="form-loading">Loading product...</div>;
 
   return (
     <div className="edit-product-container">
       <h1 className="edit-product-title">Edit Product</h1>
 
+      {/* Error or success messages */}
       {message && <p className="form-error">{message}</p>}
       {success && <p className="form-success">{success}</p>}
 
+      {/* Preview image if available */}
       {previewUrl && (
         <img
           src={previewUrl}
@@ -97,6 +135,7 @@ function EditProduct() {
         />
       )}
 
+      {/* Product edit form */}
       <form onSubmit={handleSubmit} className="edit-product-form">
         <input
           type="text"

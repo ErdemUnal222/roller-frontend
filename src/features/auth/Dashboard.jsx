@@ -1,3 +1,5 @@
+// /src/pages/admin/Dashboard.jsx
+
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
@@ -5,28 +7,33 @@ import { Link } from "react-router-dom";
 import "/src/styles/main.scss";
 
 /**
- * Admin Dashboard page
- * Displays a list of all users and allows editing or deleting them.
- * Access is restricted to admin users only.
+ * Admin Dashboard Component
+ * This is the main admin interface for managing user accounts.
+ * Allows viewing, editing, and deleting users.
+ * Only accessible by authenticated admin users.
  */
 function Dashboard() {
-  const user = useSelector((state) => state.user.user); // Get current user from Redux store
-  const token = useSelector((state) => state.user.token); // Add this line
-  const [users, setUsers] = useState([]); // List of users
-  const [loading, setLoading] = useState(true); // Loading state
-  const [editingUserId, setEditingUserId] = useState(null); // Currently editing user ID
-  const [editFormData, setEditFormData] = useState({}); // Form state for user edit
+  // Get current user info and token from Redux store
+  const user = useSelector((state) => state.user.user);
+  const token = useSelector((state) => state.user.token);
 
-  // Fetch user data on component mount
+  // Local component state
+  const [users, setUsers] = useState([]);              // List of users to display
+  const [loading, setLoading] = useState(true);        // Show loading spinner while fetching
+  const [editingUserId, setEditingUserId] = useState(null); // ID of the user being edited
+  const [editFormData, setEditFormData] = useState({});     // Editable user form data
+
+  // Fetch all users from the backend when component mounts
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const res = await fetch("http://ihsanerdemunal.ide.3wa.io:9500/api/v1/users", {
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
-});
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
+        // Validate that the response is in JSON format
         const contentType = res.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
           const text = await res.text();
@@ -34,29 +41,29 @@ function Dashboard() {
         }
 
         const data = await res.json();
-        if (data.result) setUsers(data.result); // Store retrieved users
+        if (data.result) setUsers(data.result);
       } catch (error) {
         console.error("Fetch error:", error);
       } finally {
-        setLoading(false);
+        setLoading(false); // Hide spinner
       }
     };
 
     fetchUsers();
   }, []);
 
-  // Enable form editing mode
+  // Triggered when clicking "Edit" — loads data into form
   const handleEdit = (user) => {
     setEditingUserId(user.id);
     setEditFormData({ ...user });
   };
 
-  // Update form values when edited
+  // Updates form data as user types in input fields
   const handleEditChange = (e) => {
     setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
   };
 
-  // Submit form to update user in backend
+  // Sends updated user info to the server
   const handleEditSubmit = async (e) => {
     e.preventDefault();
 
@@ -73,9 +80,11 @@ function Dashboard() {
       const data = await res.json();
 
       if (res.ok) {
+        // Replace updated user in the state
         setUsers((prev) =>
           prev.map((u) => (u.id === editingUserId ? data.newUser : u))
         );
+        // Clear editing mode
         setEditingUserId(null);
         setEditFormData({});
       } else {
@@ -86,22 +95,23 @@ function Dashboard() {
     }
   };
 
-  // Handle user deletion
+  // Deletes a user after confirmation
   const handleDelete = async (userId) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this user?");
     if (!confirmDelete) return;
 
     try {
       const res = await fetch(`http://ihsanerdemunal.ide.3wa.io:9500/api/v1/admin/user/${userId}`, {
-  method: "DELETE",
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
-});
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await res.json();
 
       if (res.ok) {
+        // Remove the deleted user from the list
         setUsers((prev) => prev.filter((u) => u.id !== userId));
       } else {
         console.error("Failed to delete user:", data.message);
@@ -111,7 +121,7 @@ function Dashboard() {
     }
   };
 
-  // If not an admin, redirect to unauthorized page
+  // Redirect non-admin users to unauthorized access page
   if (!user || user.role !== "admin") {
     return <Navigate to="/unauthorized" replace />;
   }
@@ -123,18 +133,24 @@ function Dashboard() {
         <p className="dashboard-welcome">Welcome, Admin</p>
       </header>
 
-      {/* User table section */}
+      {/* User Management Table */}
       <section className="dashboard-table" aria-labelledby="users-table-heading">
         <h2 id="users-table-heading" className="table-heading">User List</h2>
+
         {loading ? (
           <p className="loading-msg">Loading users...</p>
         ) : (
           <table className="user-table">
             <thead>
               <tr>
-                <th>Name</th><th>Email</th><th>City</th><th>Role</th><th>Actions</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>City</th>
+                <th>Role</th>
+                <th>Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {users.map((u) => (
                 <tr key={u.id}>
@@ -153,7 +169,7 @@ function Dashboard() {
         )}
       </section>
 
-      {/* Edit form section (appears only when editing) */}
+      {/* Edit Form - shown only when editing a user */}
       {editingUserId && (
         <section className="edit-form">
           <h3>Edit User</h3>

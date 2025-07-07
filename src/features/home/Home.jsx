@@ -1,22 +1,29 @@
+// Import necessary modules
 import React from 'react';
-import { Link } from 'react-router-dom';
-import '/src/styles/main.scss';
+import { Link } from 'react-router-dom'; // Used for internal navigation
+import '/src/styles/main.scss'; // Import global styles
 
 /**
  * Home Component
- * Serves as the landing page for the Roller Derby Hub.
+ * This is the landing page of the application.
+ * It welcomes users and introduces them to the core features of the Roller Derby Hub.
  */
 function Home() {
   return (
     <div className="home-page">
-      {/* Hero Section */}
+      {/* Hero Section - Acts as the visual introduction at the top of the page */}
       <section className="home-hero" role="banner" aria-labelledby="home-title">
+        {/* Main heading for the page */}
         <h1 id="home-title" className="home-title">
           Welcome to the Roller Derby Hub
         </h1>
+
+        {/* Subtitle describing the purpose of the platform */}
         <p className="home-subtitle">
           Discover, join, and organize dynamic roller derby events throughout the country.
         </p>
+
+        {/* Call-to-action button that navigates to the events page */}
         <Link
           to="/events"
           className="home-cta-button"
@@ -26,9 +33,11 @@ function Home() {
         </Link>
       </section>
 
-      {/* Why Join Section */}
+      {/* Why Join Section - Highlights key benefits of the platform */}
       <section className="home-section" aria-labelledby="why-join-title">
         <h2 id="why-join-title" className="section-title">Why Join Us?</h2>
+
+        {/* Benefit Cards - Each card outlines one feature or advantage */}
         <div className="benefits-cards">
           <div className="benefit-card">
             <span className="icon" aria-hidden="true">•</span>

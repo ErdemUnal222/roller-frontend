@@ -1,38 +1,47 @@
-// /src/components/events/EventDetails.jsx
-
+// Import necessary dependencies and components
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import api from '../../api/axios';
-import Comments from '../comments/Comments';
-import "/src/styles/main.scss";
+import api from '../../api/axios'; // Axios instance with predefined settings
+import Comments from '../comments/Comments'; // Comment section component
+import "/src/styles/main.scss"; // Global SCSS styles
 
 /**
  * EventDetails Component
- * Displays detailed information about a specific event, allows registration/unregistration,
- * and supports image upload by admins.
+ * This component displays a detailed view of a single event.
+ * It allows users to register/unregister for the event.
+ * Admins can also upload or update the event image.
  */
 const EventDetails = () => {
-  const { id } = useParams(); // Event ID from URL
+  // Extract event ID from the URL
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [event, setEvent] = useState(null);
-  const [message, setMessage] = useState('');
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [isRegistered, setIsRegistered] = useState(false);
+
+  // Component state
+  const [event, setEvent] = useState(null); // Holds the event data
+  const [message, setMessage] = useState(''); // Feedback message
+  const [selectedFile, setSelectedFile] = useState(null); // File selected for upload
+  const [isRegistered, setIsRegistered] = useState(false); // Registration status
+
+  // Get user role from Redux store
   const role = useSelector((state) => state.user.role);
 
-  // Fetch registration status
+  /**
+   * Checks if the current user is registered for the event.
+   */
   const checkRegistration = async () => {
     try {
       const res = await api.get(`/events/${id}/is-registered`);
       setIsRegistered(res.data.registered);
     } catch (err) {
       console.error('Registration check failed:', err);
-      setIsRegistered(false);
+      setIsRegistered(false); // default to false if error occurs
     }
   };
 
-  // Fetch event details
+  /**
+   * Fetch event details from API using event ID.
+   */
   const fetchEvent = async () => {
     try {
       const res = await api.get(`/events/${id}`);
@@ -42,12 +51,15 @@ const EventDetails = () => {
     }
   };
 
+  // On component mount or when event ID changes, fetch data
   useEffect(() => {
     fetchEvent();
     checkRegistration();
   }, [id]);
 
-  // Register user for event
+  /**
+   * Handles event registration.
+   */
   const handleRegister = async () => {
     try {
       await api.post(`/events/${id}/register`);
@@ -58,7 +70,9 @@ const EventDetails = () => {
     }
   };
 
-  // Unregister user from event
+  /**
+   * Handles event unregistration.
+   */
   const handleUnregister = async () => {
     try {
       await api.delete(`/events/${id}/unregister`);
@@ -69,12 +83,17 @@ const EventDetails = () => {
     }
   };
 
-  // Handle file input change
+  /**
+   * Handles file input change for uploading a new image.
+   */
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
   };
 
-  // Upload or update event picture (admin only)
+  /**
+   * Handles uploading and assigning an image to the event.
+   * Admin-only functionality.
+   */
   const handleUploadPicture = async () => {
     if (!selectedFile) return;
 
@@ -87,15 +106,18 @@ const EventDetails = () => {
     formData.append('image', selectedFile);
 
     try {
+      // Upload image to server
       const uploadRes = await api.post('/events/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
+      // Update event with new image reference
       await api.put(`/events/${id}`, {
         ...event,
         picture: uploadRes.data.filename,
       });
 
+      // Refresh event details to reflect change
       const updated = await api.get(`/events/${id}`);
       setEvent(updated.data.result);
       setSelectedFile(null);
@@ -106,12 +128,14 @@ const EventDetails = () => {
     }
   };
 
+  // Show loading state if event has not loaded yet
   if (!event) return <div className="event-loading">Loading event...</div>;
 
   return (
     <div className="event-details">
       <h1 className="event-title">{event.title}</h1>
 
+      {/* Event image, if available */}
       {event.picture && (
         <img
           src={`http://ihsanerdemunal.ide.3wa.io:9500/uploads/${event.picture}`}
@@ -120,12 +144,13 @@ const EventDetails = () => {
         />
       )}
 
+      {/* Event information */}
       <p className="event-description">{event.description}</p>
       <p className="event-meta">Date: {new Date(event.event_date).toLocaleDateString()}</p>
       <p className="event-meta">Available Places: {event.places}</p>
       <p className="event-meta">Price: €{event.price}</p>
 
-      {/* Admin image upload panel */}
+      {/* Admin-only section for uploading a new event image */}
       {role === 'admin' && (
         <div className="event-upload">
           <label htmlFor="event-image-upload">Upload or Change Event Image</label>
@@ -139,7 +164,7 @@ const EventDetails = () => {
         </div>
       )}
 
-      {/* Registration buttons */}
+      {/* Registration/unregistration button */}
       {isRegistered ? (
         <button className="event-button unregister" onClick={handleUnregister}>
           Unregister
@@ -150,10 +175,10 @@ const EventDetails = () => {
         </button>
       )}
 
-      {/* Message output */}
+      {/* Display status or error messages */}
       {message && <p className="event-message">{message}</p>}
 
-      {/* Comments Section */}
+      {/* Comments section for the event */}
       <Comments eventId={id} />
     </div>
   );

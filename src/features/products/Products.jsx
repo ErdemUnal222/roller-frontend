@@ -4,28 +4,45 @@ import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import '/src/styles/main.scss';
 
+/**
+ * Products (Admin View)
+ * This component allows administrators to view, manage, and delete products.
+ */
 function Products() {
+  // Get the logged-in user from Redux
   const user = useSelector((state) => state.user.user);
 
+  // State to store the list of all products
   const [products, setProducts] = useState([]);
+
+  // State for managing the new product form (currently unused)
   const [newProduct, setNewProduct] = useState({ title: '', description: '', price: '' });
+
+  // State for handling loading, success, and error messages
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-if (user?.role?.toLowerCase() !== 'admin') {
-  return (
-    <div className="unauthorized">
-      <h2>🚫 Unauthorized</h2>
-      <p>You do not have permission to access this page.</p>
-    </div>
-  );
-}
+  /**
+   * If the user is not an admin, deny access.
+   */
+  if (user?.role?.toLowerCase() !== 'admin') {
+    return (
+      <div className="unauthorized">
+        <h2>Unauthorized</h2>
+        <p>You do not have permission to access this page.</p>
+      </div>
+    );
+  }
 
+  /**
+   * Fetch all products from the backend when the component mounts.
+   */
   useEffect(() => {
     async function fetchData() {
       try {
         const data = await getAllProducts();
+        // Ensure data is a valid array before updating state
         setProducts(Array.isArray(data.result) ? data.result : []);
       } catch (error) {
         console.error('Error loading products:', error);
@@ -38,16 +55,22 @@ if (user?.role?.toLowerCase() !== 'admin') {
     fetchData();
   }, []);
 
+  /**
+   * Handle input changes for the product creation form (currently unused).
+   */
   const handleChange = (e) => {
     setNewProduct({ ...newProduct, [e.target.name]: e.target.value });
   };
 
+  /**
+   * Handle form submission to create a new product (not used in UI).
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const created = await createProduct(newProduct);
-      setProducts([...products, created]);
-      setNewProduct({ title: '', description: '', price: '' });
+      setProducts([...products, created]); // Add new product to list
+      setNewProduct({ title: '', description: '', price: '' }); // Reset form
       setSuccess('Product created successfully.');
       setError('');
     } catch (err) {
@@ -56,13 +79,16 @@ if (user?.role?.toLowerCase() !== 'admin') {
     }
   };
 
+  /**
+   * Handle deletion of a product after confirmation.
+   */
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm('Are you sure you want to delete this product?');
     if (!confirmDelete) return;
 
     try {
-      await deleteProduct(id);
-      setProducts(products.filter((p) => p.id !== id));
+      await deleteProduct(id); // Call API to delete
+      setProducts(products.filter((p) => p.id !== id)); // Remove from local state
       setSuccess('Product deleted.');
       setError('');
     } catch (err) {
@@ -73,54 +99,27 @@ if (user?.role?.toLowerCase() !== 'admin') {
 
   return (
     <div className="admin-products-container">
-      <h2 className="admin-products-title">Manage Products</h2>
-
-      {error && <p className="form-error">{error}</p>}
-      {success && <p className="form-success">{success}</p>}
-
-      <form onSubmit={handleSubmit} className="admin-product-form">
-        <input
-          type="text"
-          name="title"
-          placeholder="Title"
-          value={newProduct.title}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="text"
-          name="description"
-          placeholder="Description"
-          value={newProduct.description}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="number"
-          name="price"
-          placeholder="Price"
-          value={newProduct.price}
-          onChange={handleChange}
-          required
-        />
-        <button type="submit">Add Product</button>
-      </form>
-
       {loading ? (
+        // Show loading indicator while fetching data
         <div className="admin-loading">Loading products...</div>
       ) : (
         <ul className="admin-product-list">
+          {/* Display each product in a list */}
           {products.map((product) => (
             <li key={product.id} className="admin-product-item">
               <div className="admin-product-info">
+                {/* Product image preview */}
                 {product.picture && (
-                  <img
-                    src={`/uploads/products/${product.picture}`}
-                    alt={product.alt || 'Product'}
-                    className="admin-product-thumbnail"
-                    style={{ width: '60px', height: '60px', objectFit: 'cover' }}
-                  />
+                 <img
+                  src={`http://ihsanerdemunal.ide.3wa.io:9500/uploads/products/${product.picture}`}
+                  alt={product.alt || 'Product'}
+                  className="admin-product-thumbnail"
+                  style={{ width: '60px', height: '60px', objectFit: 'cover' }}
+                />
+                
                 )}
+
+                {/* Product details */}
                 <p className="admin-product-name">{product.title}</p>
                 <p className="admin-product-price">Price: {product.price} €</p>
                 <p className="admin-product-stock">Stock: {product.stock}</p>
@@ -128,7 +127,9 @@ if (user?.role?.toLowerCase() !== 'admin') {
               </div>
 
               <div className="admin-product-actions">
-                <Link to={`/products/edit/${product.id}`}>Edit</Link>
+                {/* Edit link navigates to the edit page */}
+                <Link to={`/admin/products/edit/${product.id}`}>Edit</Link>
+                {/* Delete button with confirmation */}
                 <button onClick={() => handleDelete(product.id)} className="delete">
                   Delete
                 </button>
