@@ -6,62 +6,47 @@ import {
 } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import api from '../../api/axios';
 import "/src/styles/main.scss";
 
-/**
- * MessageInbox Component
- * Displays a list of conversations and users to start a new message.
- * Supports refresh from parent component using a forwarded ref.
- */
+// ✅ NEW: Import service-based functions
+import { getInbox } from '/src/api/messagesService';
+import API from '/src/api/axios'; // still needed for user list
+
 const MessageInbox = forwardRef((props, ref) => {
-  const currentUser = useSelector((state) => state.user.user); // Get logged-in user from Redux
+  const currentUser = useSelector((state) => state.user.user);
   const currentUserId = currentUser?.id;
 
-  const [inbox, setInbox] = useState([]); // Holds the list of recent conversations
-  const [users, setUsers] = useState([]); // Holds the list of all other users
-  const [error, setError] = useState(''); // Stores any error messages for UI display
+  const [inbox, setInbox] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [error, setError] = useState('');
 
-  /**
-   * Fetches the user's inbox (recent conversations).
-   * Called on component mount and can be triggered externally using the ref.
-   */
+  // ✅ Use service to fetch inbox
   const refreshInbox = async () => {
     if (!currentUserId) return;
     try {
-      const res = await api.get('/messages/inbox');
-      console.log("📥 Inbox refreshed:", res.data.result);
-      setInbox(res.data.result || []);
+      const res = await getInbox();
+      setInbox(res.result || []);
     } catch (err) {
-      console.error('❌ Inbox fetch failed:', err);
+      console.error('❌ Inbox fetch failed:', err)
       setError('Failed to load your messages.');
     }
   };
 
-  /**
-   * Expose refreshInbox method to parent component via useImperativeHandle.
-   * This enables parent components to manually trigger a refresh.
-   */
   useImperativeHandle(ref, () => ({
     refreshInbox
   }));
 
-  /**
-   * Initial load: fetch inbox once when component is mounted.
-   */
   useEffect(() => {
     refreshInbox();
   }, [currentUserId]);
 
-  /**
-   * Fetch all users except the currently logged-in user (for "Start New Chat" section).
-   */
+  // 🔄 Keep users API here (no usersService yet)
   useEffect(() => {
     if (!currentUserId) return;
     const fetchUsers = async () => {
       try {
-        const res = await api.get('/users');
-        const others = res.data.result?.filter((u) => u.id !== currentUserId) || [];
+        const res = await API.get('/users/list');
+        const others = res.data.result?.filter(u => u.id !== currentUserId) || [];
         setUsers(others);
       } catch (err) {
         console.error('❌ User fetch failed:', err);
@@ -75,13 +60,12 @@ const MessageInbox = forwardRef((props, ref) => {
     <section className="inbox-container" role="main" aria-labelledby="inbox-title">
       <h2 id="inbox-title" className="inbox-heading">Messages</h2>
 
-      {/* Error display if any API call fails */}
       {error && <p className="inbox-error" role="alert">{error}</p>}
 
-      {/* Inbox Section (list of existing conversations) */}
+      {/* Inbox list */}
       <div className="inbox-section">
         {inbox.length === 0 || inbox.filter(msg => msg.sender_id && msg.receiver_id && msg.id).length === 0 ? (
-          <p className="inbox-empty"></p>
+          <p className="inbox-empty">You have no messages yet.</p>
         ) : (
           <ul className="inbox-list">
             {inbox.map((msg) => {
@@ -91,7 +75,6 @@ const MessageInbox = forwardRef((props, ref) => {
                   ? msg.receiver_username
                   : msg.sender_username;
 
-              // Avoid displaying malformed messages
               if (!otherUserId || isNaN(otherUserId)) {
                 console.warn("⚠️ Skipping malformed message:", msg);
                 return null;
@@ -105,7 +88,6 @@ const MessageInbox = forwardRef((props, ref) => {
                     aria-label={`Open chat with ${otherUsername || 'user'}`}
                   >
                     {otherUsername || 'Unknown user'}
-                    {/* Show unread indicator for messages not seen by the receiver */}
                     {!msg.seen && msg.receiver_id === currentUserId && (
                       <span className="inbox-badge" aria-label="New message">●</span>
                     )}
@@ -119,7 +101,6 @@ const MessageInbox = forwardRef((props, ref) => {
 
       <div className="inbox-divider" />
 
-      {/* Section to start a new conversation */}
       <h3 className="inbox-subheading">Start New Chat</h3>
 
       <div className="inbox-section">

@@ -37,7 +37,7 @@ function Register() {
 
     try {
       // Send user registration data to the backend API
-      const response = await api.post('/auth/signup', {
+      const response = await api.post('/register', {
         firstName,
         lastName,
         email,

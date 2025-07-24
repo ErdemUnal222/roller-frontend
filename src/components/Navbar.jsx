@@ -77,6 +77,7 @@ function Navbar() {
             {isLoggedIn ? (
               <>
                 <Link to="/messages" className="navbar-link">Messages</Link>
+                <Link to="/availability" className="navbar-link">Availability</Link>
                 <Link to="/profile" className="navbar-link profile-link">
                   {user?.picture ? (
                     <img

@@ -32,28 +32,30 @@ function EditProduct() {
   /**
    * Fetch the existing product data on component mount
    */
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await api.get(`/products/${id}`);
-        const result = response.data?.result?.[0]; // Get the first result (product)
-        if (result) {
-          setProduct(result); // Fill form with existing product data
-          if (result.picture) {
-            // Set preview image if picture exists
-            setPreviewUrl(`http://ihsanerdemunal.ide.3wa.io:9500/uploads/${result.picture}`);
-          }
+useEffect(() => {
+  const fetchProduct = async () => {
+    try {
+      const response = await api.get(`/products/${id}`, {
+        withCredentials: true,
+      });
+      const result = response.data?.result; // ✅ Fixed here
+      if (result) {
+        setProduct(result); // Fill form with existing product data
+        if (result.picture) {
+          setPreviewUrl(`http://ihsanerdemunal.ide.3wa.io:9500/uploads/${result.picture}`);
         }
-      } catch (error) {
-        console.error('Error fetching product:', error);
-        setMessage('Error loading product');
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      setMessage('Error loading product');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchProduct();
-  }, [id]);
+  fetchProduct();
+}, [id]);
+
 
   /**
    * Handle changes in the text inputs
@@ -106,7 +108,7 @@ const handleSubmit = async (e) => {
       withCredentials: true,
     });
     setSuccess('Product updated successfully!');
-    setTimeout(() => navigate('/products'), 1000);
+    setTimeout(() => navigate('/admin/products/edit/${id}'), 1000);
   } catch (err) {
     console.error('Error updating product:', err);
     setMessage('Error updating product');

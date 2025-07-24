@@ -1,27 +1,22 @@
-// /src/api/orders.js
-// This module handles all the API requests related to managing orders on the platform.
-// These functions are used for placing orders, fetching them, and updating their status.
+// /src/api/orderService.js
+// Handles all API requests related to order management
 
-import API from './axios'; // Import the pre-configured Axios instance (handles base URL and token injection)
+import API from './axios';
 
 /**
- * Get a list of all orders from the backend.
- * This function is typically used by administrators on the admin dashboard to review every order.
- *
+ * Get a list of all orders (requires authentication).
  */
 export const getAllOrders = async () => {
   try {
     const res = await API.get('/orders');
-    return res.data; // Return data received from the backend
+    return res.data;
   } catch (err) {
-    throw err.formattedMessage || "Failed to fetch orders."; // Handle and return readable error
+    throw err.formattedMessage || "Failed to fetch orders.";
   }
 };
 
 /**
- * Fetch the details of a specific order using its ID.
- * This is useful for showing a confirmation page or an admin detail view of a single order.
- *
+ * Fetch the details of a specific order by ID.
  */
 export const getOrderById = async (id) => {
   try {
@@ -33,13 +28,11 @@ export const getOrderById = async (id) => {
 };
 
 /**
- * Submit a new order to the backend.
- * This is triggered after a customer completes checkout.
- * It usually includes cart items, total price, and user information.
+ * Create a new order (requires authentication).
  */
 export const createOrder = async (orderData) => {
   try {
-    const res = await API.post('/orders', orderData); // Send POST request to backend
+    const res = await API.post('/orders', orderData);
     return res.data;
   } catch (err) {
     throw err.formattedMessage || "Failed to create order.";
@@ -47,24 +40,7 @@ export const createOrder = async (orderData) => {
 };
 
 /**
- * Update the status of an existing order.
- * This is used mainly by administrators—for example, to change status from "Pending" to "Shipped".
- *
- */
-export const updateOrderStatus = async (id, statusData) => {
-  try {
-    const res = await API.put(`/orders/${id}/status`, statusData);
-    return res.data;
-  } catch (err) {
-    throw err.formattedMessage || "Failed to update order status.";
-  }
-};
-
-/**
- * Submit payment for an order.
- * This is used right after the order is created to send payment data (e.g. Stripe token) to the backend.
- * The backend processes it with the payment provider (Stripe in this case).
- *
+ * Submit payment information after order creation.
  */
 export const createPayment = async (paymentData) => {
   try {

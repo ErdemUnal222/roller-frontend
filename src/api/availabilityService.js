@@ -11,10 +11,9 @@ import API from './axios'; // Import the custom Axios instance (handles base URL
  */
 export const getAllAvailabilities = async () => {
   try {
-    const res = await API.get('/availabilities'); // Send GET request to /availabilities
-    return res.data; // Return the response data from backend
+    const res = await API.get('/availabilities');
+    return res.data.result; // important : extraire le tableau
   } catch (err) {
-    // If the backend responds with an error, display its message; otherwise, use a default error
     throw err.response?.data?.message || "Failed to fetch availabilities.";
   }
 };
@@ -41,7 +40,7 @@ export const getAvailabilityByUser = async (userId) => {
 export const createAvailability = async (data) => {
   try {
     const res = await API.post('/availabilities', data); // Send POST request to /availabilities
-    return res.data;
+    return res.data.result;
   } catch (err) {
     throw err.response?.data?.message || "Failed to create availability.";
   }

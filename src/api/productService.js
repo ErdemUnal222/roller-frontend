@@ -1,37 +1,41 @@
-// /src/api/products.js
+// src/api/productService.js
 // This module handles all API interactions related to product management.
 
 import API from './axios';
 
 /**
- * Fetch the complete list of products.
- * Typically used to display a product catalog in the admin panel or shop.
+ * Fetch the complete list of products (admin view).
  */
 export const getAllProducts = async () => {
   try {
-    const res = await API.get('/products');
+    const res = await API.get('/products'); // Admin-only route
     return res.data;
   } catch (err) {
     throw err.formattedMessage || "Failed to fetch products.";
   }
 };
-// src/api/productService.js
 
+/**
+ * Fetch the product catalog for the public shop.
+ */
 export const getShopProducts = async () => {
-  const response = await API.get('/shop');
-  return response.data;
+  try {
+    const response = await API.get('/shop');
+    return response.data;
+  } catch (err) {
+    throw err.formattedMessage || "Failed to fetch shop products.";
+  }
 };
-
 
 /**
  * Fetch a single product by its ID.
- * Useful for displaying product details before editing or purchasing.
- * @param {string|number} id - The ID of the product
+ * - If isAdmin is true, fetch from /products/:id
+ * - Otherwise, fetch from /shop/:id
  */
-export const getProductById = async (id) => {
+export const getProductById = async (id, isAdmin = false) => {
   try {
-    const res = await API.get(`/products/${id}`);
-    console.log(res.data); // Can be removed in production
+    const path = isAdmin ? `/products/${id}` : `/shop/${id}`;
+    const res = await API.get(path);
     return res.data;
   } catch (err) {
     throw err.formattedMessage || "Failed to fetch product.";
@@ -39,13 +43,11 @@ export const getProductById = async (id) => {
 };
 
 /**
- * Create a new product.
- * Only accessible to admins. The route `/products/add` is secured with authentication middleware.
- * @param {Object} data - Product form data (title, description, price, etc.)
+ * Create a new product (admin-only).
  */
 export const createProduct = async (data) => {
   try {
-    const res = await API.post('/products/add', data);
+    const res = await API.post('/products', data); // Fixed path
     return res.data;
   } catch (err) {
     throw err.formattedMessage || "Failed to create product.";
@@ -53,14 +55,11 @@ export const createProduct = async (data) => {
 };
 
 /**
- * Update an existing product by its ID.
- * Used by admins to edit product information through the `/products/edit/:id` route.
- * @param {string|number} id - Product ID
- * @param {Object} data - New values to update (title, price, stock, etc.)
+ * Update an existing product by ID (admin-only).
  */
 export const updateProduct = async (id, data) => {
   try {
-    const res = await API.put(`/products/edit/${id}`, data);
+    const res = await API.put(`/products/${id}`, data); // Fixed path
     return res.data;
   } catch (err) {
     throw err.formattedMessage || "Failed to update product.";
@@ -68,9 +67,7 @@ export const updateProduct = async (id, data) => {
 };
 
 /**
- * Delete a product by its ID.
- * Only available to authenticated admin users.
- * @param {string|number} id - The ID of the product to delete
+ * Delete a product by ID (admin-only).
  */
 export const deleteProduct = async (id) => {
   try {
@@ -80,7 +77,15 @@ export const deleteProduct = async (id) => {
     throw err.formattedMessage || "Failed to delete product.";
   }
 };
-export async function getOneProduct(id) {
-  const res = await API.get(`/shop/${id}`);
-  return res.data;
-}
+
+/**
+ * Fetch a single public product (for shop detail page).
+ */
+export const getOneProduct = async (id) => {
+  try {
+    const res = await API.get(`/shop/${id}`);
+    return res.data;
+  } catch (err) {
+    throw err.formattedMessage || "Failed to fetch shop product.";
+  }
+};

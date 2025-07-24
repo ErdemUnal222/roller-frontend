@@ -4,80 +4,127 @@ import { useEffect, useState } from 'react';
 import {
   getAllAvailabilities,
   createAvailability,
-} from '../../api/availabilityService'; // Import API service functions
-import "/src/styles/main.scss"; // Global styles import
+} from '../../api/availabilityService';
+import '/src/styles/main.scss'; // Import global styles
 
 /**
  * Availability Component
- *
- * This page allows users to view a list of their availability dates
- * and add new availability slots using a simple form.
+ * 
+ * This component allows logged-in users to view and add availability periods.
  */
 function Availability() {
-  // State to hold the list of current availability slots
+  // State to store the list of availability entries
   const [availabilities, setAvailabilities] = useState([]);
 
-  // State to hold form input values for a new availability
-  const [newSlot, setNewSlot] = useState({ date: '', isAvailable: true });
+  // State to store the form inputs for a new availability entry
+  const [newSlot, setNewSlot] = useState({
+    start_date: '',
+    end_date: '',
+    comment: '',
+  });
 
-  /**
-   * useEffect runs once on component mount.
-   * It fetches all existing availability slots from the backend API.
-   */
+  // Load all existing availabilities when the component is first displayed
   useEffect(() => {
     async function fetchData() {
       try {
-        const data = await getAllAvailabilities(); // API call to get all availability records
-        setAvailabilities(data); // Store data in state
+        const data = await getAllAvailabilities(); // Fetch availability list from the backend
+        setAvailabilities(data); // Store in local state
       } catch (error) {
-        console.error('Error loading availabilities', error); // Log error if fetch fails
+        console.error('Error loading availabilities', error);
       }
     }
 
-    fetchData();
-  }, []); // Empty dependency array → runs only on first render
+    fetchData(); // Run once on component mount
+  }, []);
 
   /**
-   * Handles form submission to create a new availability slot.
-   * Calls the backend API and updates the UI with the new slot.
+   * Submit handler for the availability form.
+   * Sends the new availability data to the backend and updates the UI.
    */
-  const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form reload
-    try {
-      const created = await createAvailability(newSlot); // API call to add new slot
-      setAvailabilities([...availabilities, created]); // Update state with the new slot
-      setNewSlot({ date: '', isAvailable: true }); // Reset form inputs
-    } catch (err) {
-      console.error('Error creating availability:', err); // Log any errors
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    const created = await createAvailability(newSlot);
+
+    // Check if the response structure matches the backend: { result: { id, start_date, end_date, ... } }
+    if (!created || !created.result || !created.result.id) {
+      throw new Error("Invalid response from server");
     }
-  };
+
+    // Add the new availability to the list
+    setAvailabilities([...availabilities, created.result]);
+
+    // Reset form fields
+    setNewSlot({ start_date: '', end_date: '', comment: '' });
+  } catch (err) {
+    console.error('Error creating availability:', err);
+  }
+};
+
 
   return (
     <div className="availability-page" role="main" aria-labelledby="availability-title">
       <h2 id="availability-title" className="availability-title">My Availability</h2>
 
-      {/* Form to add a new availability slot */}
+      {/* Form to add a new availability period */}
       <form onSubmit={handleSubmit} className="availability-form">
-        <input
-          type="date"
-          value={newSlot.date}
-          onChange={(e) => setNewSlot({ ...newSlot, date: e.target.value })} // Update date input
-          className="availability-input"
-          required
-          aria-label="Select availability date"
-        />
+        <label>
+          Start Date:
+          <input
+            type="datetime-local"
+            value={newSlot.start_date}
+            onChange={(e) =>
+              setNewSlot({ ...newSlot, start_date: e.target.value })
+            }
+            required
+            className="availability-input"
+          />
+        </label>
+
+        <label>
+          End Date:
+          <input
+            type="datetime-local"
+            value={newSlot.end_date}
+            onChange={(e) =>
+              setNewSlot({ ...newSlot, end_date: e.target.value })
+            }
+            required
+            className="availability-input"
+          />
+        </label>
+
+        <label>
+          Comment (optional):
+          <input
+            type="text"
+            value={newSlot.comment}
+            onChange={(e) =>
+              setNewSlot({ ...newSlot, comment: e.target.value })
+            }
+            className="availability-input"
+          />
+        </label>
+
         <button type="submit" className="availability-button">
           Add Availability
         </button>
       </form>
 
-      {/* Render list of all existing availability entries */}
+      {/* Display the list of existing availabilities */}
       <ul className="availability-list">
-        {availabilities.map((slot) => (
-          <li key={slot.id} className="availability-item">
-            {slot.date} — {slot.isAvailable ? 'Available' : 'Unavailable'}
-          </li>
-        ))}
+        {availabilities.map((slot, index) => {
+          // Skip any invalid or incomplete entries
+          if (!slot || !slot.start_date || !slot.end_date) return null;
+
+          return (
+            <li key={slot.id || index} className="availability-item">
+              From {new Date(slot.start_date).toLocaleString()} to{' '}
+              {new Date(slot.end_date).toLocaleString()}
+              {slot.comment && ` — Note: ${slot.comment}`}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
