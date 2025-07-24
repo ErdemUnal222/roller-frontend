@@ -47,8 +47,9 @@ function Register() {
         city,
       });
 
-      console.log('Registration success:', response.data);
-
+if (import.meta.env.DEV) {
+        console.log('Registration success:', response.data);
+      }
       // Redirect the user to the login page
       navigate('/login');
     } catch (err) {

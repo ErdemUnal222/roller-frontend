@@ -12,7 +12,7 @@ import { Navigate } from "react-router-dom";
  */
 function UsersAdmin() {
   // Get the current logged-in user's token and data from the Redux store
-  const token = useSelector((state) => state.user.token);
+  const token = useSelector((state) => state.user.token); // unused but kept for potential future use
   const user = useSelector((state) => state.user.user);
 
   // Local state to hold the list of users and loading indicator
@@ -26,8 +26,7 @@ function UsersAdmin() {
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        const data = await fetchAllUsers(token);
-        setUsers(data);
+        const data = await fetchAllUsers();        setUsers(data);
       } catch (err) {
         console.error("Failed to load users:", err);
       } finally {

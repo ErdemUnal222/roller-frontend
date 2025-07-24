@@ -75,8 +75,8 @@ function AddProduct() {
 
       setSuccess('Product created successfully!');
 
-      // Redirect to the product list after a short delay
-      setTimeout(() => navigate('/products'), 1000);
+        // Redirect to the admin product list after a short delay
+      setTimeout(() => navigate('/admin/products'), 1000);
     } catch (err) {
       console.error('Error creating product:', err);
       setError('Failed to create product. Please try again.');

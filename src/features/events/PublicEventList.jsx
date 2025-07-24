@@ -17,8 +17,7 @@ function PublicEventList() {
   const [loading, setLoading] = useState(true); // Show loading message until events are fetched
 
   // Optional: Get user role from Redux if you want to show different info for different roles
-  const role = useSelector((state) => state.user.role);
-
+  const role = useSelector((state) => state.user.user?.role);
   /**
    * Fetch the list of events when the component is first rendered.
    */

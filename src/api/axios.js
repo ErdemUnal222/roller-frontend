@@ -4,8 +4,10 @@ import axios from 'axios';
 // -----------------------------------------------------------
 // 1. CREATE CUSTOM AXIOS INSTANCE
 // -----------------------------------------------------------
+
+// Read base URL from environment variables provided by Vite
 const api = axios.create({
-  baseURL: 'http://ihsanerdemunal.ide.3wa.io:9500/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -27,11 +29,15 @@ api.interceptors.request.use(
       console.warn("⚠️ Could not parse user from localStorage:", err);
     }
 
-    // ✅ DEBUG: Log token and final Authorization header
+    // ✅ Attach token if available
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log("✅ Token attached to request:", config.headers.Authorization);
-    } else {
+if (import.meta.env.DEV) {
+        console.log(
+          "✅ Token attached to request:",
+          config.headers.Authorization
+        );
+      }    } else {
       console.warn("❌ No token found, Authorization header not attached.");
     }
 

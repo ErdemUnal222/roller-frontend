@@ -34,8 +34,9 @@ function Footer() {
   const handleSubscribe = (e) => {
     e.preventDefault(); // Prevent default form behavior (page reload)
     if (email.trim()) {
-      console.log(`Subscribed: ${email}`); // Print to console (can be replaced with real logic)
-      setEmail(''); // Clear input field
+      if (import.meta.env.DEV) {
+        console.log(`Subscribed: ${email}`); // Only log in development
+      }      setEmail(''); // Clear input field
       alert('Thanks for subscribing!'); // Feedback message for the user
     }
   };

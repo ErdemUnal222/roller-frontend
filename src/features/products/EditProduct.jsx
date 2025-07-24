@@ -108,8 +108,7 @@ const handleSubmit = async (e) => {
       withCredentials: true,
     });
     setSuccess('Product updated successfully!');
-    setTimeout(() => navigate('/admin/products/edit/${id}'), 1000);
-  } catch (err) {
+    setTimeout(() => navigate(`/admin/products/edit/${id}`), 1000);  } catch (err) {
     console.error('Error updating product:', err);
     setMessage('Error updating product');
   }

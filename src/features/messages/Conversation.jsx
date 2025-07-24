@@ -30,10 +30,12 @@ function Conversation({ messages, currentUserId }) {
     // Delay the scroll slightly to ensure DOM is updated
     const timeout = setTimeout(scrollToBottom, 100);
 
-    // Debug: Log messages to the console (can be removed in production)
-    console.log("Conversation props → messages:", messages);
-    console.log("currentUserId:", currentUserId);
-    console.table(messages);
+    // Debug logs only in development to avoid leaking message contents
+    if (import.meta.env.DEV) {
+      console.log("Conversation props → messages:", messages);
+      console.log("currentUserId:", currentUserId);
+      console.table(messages);
+    }
 
     // Clean up the timeout if component unmounts or messages change quickly
     return () => clearTimeout(timeout);
@@ -57,8 +59,9 @@ function Conversation({ messages, currentUserId }) {
       {messages.filter(Boolean).map((msg) => {
         if (!msg || typeof msg !== 'object') return null;
 
-        console.log('💬 msg record:', msg); // Debug log for each message object
-
+if (import.meta.env.DEV) {
+          console.log('💬 msg record:', msg); // Debug log for each message object
+        }
         // Compare sender ID with current user ID (convert to numbers to avoid type mismatch)
         const isSentByCurrentUser = Number(msg.sender_id) === Number(currentUserId);
 

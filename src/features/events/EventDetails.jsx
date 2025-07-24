@@ -1,6 +1,6 @@
 // Import necessary dependencies and components
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import api from '../../api/axios'; // Axios instance with predefined settings
 import Comments from '../comments/Comments'; // Comment section component
@@ -15,7 +15,6 @@ import "/src/styles/main.scss"; // Global SCSS styles
 const EventDetails = () => {
   // Extract event ID from the URL
   const { id } = useParams();
-  const navigate = useNavigate();
 
   // Component state
   const [event, setEvent] = useState(null); // Holds the event data
@@ -24,7 +23,8 @@ const EventDetails = () => {
   const [isRegistered, setIsRegistered] = useState(false); // Registration status
 
   // Get user role from Redux store
-  const role = useSelector((state) => state.user.role);
+  const role = useSelector((state) => state.user.user?.role);
+  const isAdmin = role?.toLowerCase() === 'admin';
 
   /**
    * Checks if the current user is registered for the event.
@@ -97,8 +97,8 @@ const EventDetails = () => {
   const handleUploadPicture = async () => {
     if (!selectedFile) return;
 
-    if (role !== 'admin') {
-      setMessage('Only admins can upload event pictures.');
+if (!isAdmin) {
+  setMessage('Only admins can upload event pictures.');
       return;
     }
 
@@ -151,8 +151,8 @@ const EventDetails = () => {
       <p className="event-meta">Price: €{event.price}</p>
 
       {/* Admin-only section for uploading a new event image */}
-      {role === 'admin' && (
-        <div className="event-upload">
+      {isAdmin && (
+      <div className="event-upload">
           <label htmlFor="event-image-upload">Upload or Change Event Image</label>
           <input
             id="event-image-upload"

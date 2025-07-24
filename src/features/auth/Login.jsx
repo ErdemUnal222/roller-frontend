@@ -51,8 +51,12 @@ function Login() {
       localStorage.setItem('user', JSON.stringify(userDataToStore));
       localStorage.setItem('userId', user.id); // Optional separate storage of user ID
 
-      console.log("User logged in, stored in localStorage:", userDataToStore);
-
+if (import.meta.env.DEV) {
+        console.log(
+          "User logged in, stored in localStorage:",
+          userDataToStore
+        );
+      }
       // Update Redux store with user and token
       dispatch(setToken(token));
       dispatch(setUser(userDataToStore));
